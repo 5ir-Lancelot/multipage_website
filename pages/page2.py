@@ -21,11 +21,27 @@ from dash.dependencies import Input, Output
 from numpy import log10
 from plotly.subplots import make_subplots
 
+# add the module callback
+from dash import  callback
+
+# to import images
+import base64
+
+
+# to import images
+# Using base64 encoding and decoding
+def b64_image(image_filename):
+    with open(image_filename, 'rb') as f:
+        image = f.read()
+    return 'data:image/png;base64,' + base64.b64encode(image).decode('utf-8')
+
+
 #database which should be used for the calculations
 # PhreeqPython comes standard with phreeqc.dat, pitzer.dat and vitens.dat
+
 pp = phreeqpython.PhreeqPython(database='vitens.dat')
 
-
+dash.register_page(__name__)
 
 #from components import solve
 
@@ -68,22 +84,27 @@ app.title = 'Open Carbonate System Alkalinity Calculations'
 
 
 # important part of code for the dash pages (to register it)
-dash.register_page(__name__, path='/script')
+#dash.register_page(__name__, path='/script')
 
 # for Heroku to regognize it
 server=app.server
 
+#get the current location to make the correct filepath
+
+#relative filepath depends where the code is opened by which program (never use the absolute filepaths
+# here because they are super static and always need to be adapted
 filepath = os.path.split(os.path.realpath(__file__))[0]
 
-print(filepath)
 
-narrative_text = open(os.path.join(filepath, "../assets/narrative_improved.md"), "r").read()
-refs_text = open(os.path.join(filepath, "../assets/references.md"), "r").read()
-some_text = open(os.path.join(filepath, "../assets/sometext.md"), "r").read()
+
+
+narrative_text = open(os.path.join(filepath, "./assets/narrative_improved.md"), "r").read()
+refs_text = open(os.path.join(filepath, "./assets/references.md"), "r").read()
+some_text = open(os.path.join(filepath, "./assets/sometext.md"), "r").read()
 #input_text=open(os.path.join(filepath, "assets/Textbox_input.md"), "r").read()
 #output_text=open(os.path.join(filepath, "assets/Textbox_output.md"), "r").read()
 
-image_path = '../assets/uhh-logo-web.jpg'
+image_path =os.path.join(filepath, "./assets/uhh-logo-web.jpg")
 
 app.index_string = '''
 <!DOCTYPE html>
@@ -110,12 +131,14 @@ app.index_string = '''
 
 # to navigate back  use ././
 
+
+
 # read in the bjerrum plot csv file as lines
-lines=pd.read_table("././assets/bjerrum_plot_update_phreeqpython.csv", sep=',', keep_default_na=False \
+lines=pd.read_table(os.path.join(filepath,"./assets/bjerrum_plot_update_phreeqpython.csv"), sep=',', keep_default_na=False \
                     , na_filter=False, header='infer', engine='python', encoding='utf-8')
 
 
-DIC_line=pd.read_table('././assets/open_carbonate_system_phreeqpython.csv', sep=',', keep_default_na=False \
+DIC_line=pd.read_table(os.path.join(filepath,'./assets/open_carbonate_system_phreeqpython.csv'), sep=',', keep_default_na=False \
                        , na_filter=False, header='infer', engine='python', encoding='utf-8')
 
 
@@ -183,16 +206,14 @@ alkalinity_value=dcc.Input(
         value=2500)
 
 
-T_slider2=dcc.Slider(id='T', min=0, max=100, step=0.5, marks={x: str(x)+'°C' for x in range(0,100,10)},
-        value=5, tooltip={"placement": "bottom", "always_visible": True}, updatemode='drag')
-
 
 # APP LAYOUT
 # ==========
 
 layout = html.Div([
     dbc.Container(children=[
-        html.Img(src=image_path, alt='UHH logo red white png'),
+        # embed the image that need to be placed in the assets directory
+        html.Img(src=b64_image('./pages/assets/up-uhh-logo-u-2010-u-png.png'), alt='UHH logo red white png', style={'width': '50%', 'height': '50%'}),
         dcc.Markdown(narrative_text, mathjax=True),
         
         #dcc.Graph(id="sir_solution", figure=display_SIR_solution(solve(delta=0.5, R0=2.67, tau=8.5))),
@@ -207,7 +228,7 @@ layout = html.Div([
                           dbc.Col(children=[alkalinity_value], className="col-md-8")]),
         html.Br(),
         html.Br(),
-        dcc.Graph(id='indicator-graphic',style={'width': '80vw', 'height':1500}),
+        dcc.Graph(id="indicator-graphic",style={'width': '80vw', 'height':1500}),
         # old settings
         # 'height': '90vh'
         # , 'display': 'inline-block', 'vertical-align': 'middle'
@@ -246,6 +267,7 @@ layout = html.Div([
         html.Br(),
         #include reference to impressum and data policy
         html.H2('Impressum'),
+
         html.A('Impressum', href='/assets/imprint.html'),
         html.Br(),
         html.Br(),
@@ -273,7 +295,8 @@ layout = html.Div([
 # here inputs and outputs of the application are defined
 
 # change here
-@app.callback(Output("indicator-graphic", "figure"),
+# renamed to callback instead of app.callback
+@callback(Output("indicator-graphic", "figure"),
               Output("table1","children"),
 
               # new output plot include here 18.10.2022
@@ -540,7 +563,6 @@ def update_graph(T,pCO2,alkalinity):
 
 
     return fig,tbl
-
 
 
 

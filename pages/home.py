@@ -1,9 +1,14 @@
 import dash
-from dash import html
+from dash import html, dcc
+
 
 dash.register_page(__name__, path='/')
 
 layout = html.Div([
     html.H1('This is our Home page'),
     html.Div('This is our Home page content.'),
+    dcc.Link('Go to Page 1', href='/page1'),
+    dcc.Link('Go to Page 2', href='/page2')
+
+
 ])
