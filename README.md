@@ -14,14 +14,14 @@ The home.py is just an page that is placed as root to guide the user to both of 
 Maybe on the home page also Barrierefreiheitserklärung, Datenschutzerklärung and Impressum need to be added.
 
 
-Project/
-|-- app.py
-|
-|-- pages/
-|   |page2.py
-|   |page3.py
-|   |-- assets/
-|   |   |-- stuff
-|   |
-|-- README
+Project/ \
+|-- app.py \
+|  \
+|-- pages/  \
+|   |page2.py   \
+|   |page3.py  \
+|   |-- assets/   \
+|   |   |-- stuff   \
+|   |    \
+|-- README   \
 
