@@ -122,37 +122,13 @@ dash.register_page(__name__)
 # here you can search for a good free bootstrap CND and just copy the link into the external stylesheets and load it
 # https://www.bootstrapcdn.com/bootswatch/
 
-external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/flatly/bootstrap.min.css',
-                        #'https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/journal/bootstrap.min.css',
-                        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/monokai-sublime.min.css']
 
-#external_stylesheets=[dbc.themes.CYBORG]
-
-
-external_scripts = ['https://code.jquery.com/jquery-3.2.1.slim.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js',
-                    'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js']
-
-# no clue what these external scripts do
-#external_scripts=[dbc.]
-# Server definition
-
-server = flask.Flask(__name__)
 
 # layout options
 # https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
 
-app = dash.Dash(__name__,
-                external_stylesheets=external_stylesheets,
-                external_scripts=external_scripts,
-                server=server,
-                meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
+#remove all the app definitions that should be just present in the main file
 
-# title taht will be visible in the browser tab
-app.title = 'Open Carbonate System Alkalinity Calculations'
-
-# for Heroku to regognize it
-server=app.server
 
 filepath = os.path.split(os.path.realpath(__file__))[0]
 
@@ -185,25 +161,7 @@ image_path = 'assets/uhh-logo-web.jpg'
 #standard app.index_string
 
 
-app.index_string = '''
-<!DOCTYPE html>
-<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-'''
+
 
 
 # no need to put it just use deault settings
@@ -292,7 +250,7 @@ params = [
 
 # changed mathjax=True
 
-app.layout = html.Div([
+layout = html.Div([
     dbc.Container(children=[
         html.Img(src=image_path, alt='UHH logo rot weiß png'),
         dcc.Markdown(narrative_text, mathjax=True),

@@ -52,42 +52,8 @@ dash.register_page(__name__)
 # here you can search for a good free bootstrap CND and just copy the link into the external stylesheets and load it
 # https://www.bootstrapcdn.com/bootswatch/
 
-external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/flatly/bootstrap.min.css',
-                        #'https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/journal/bootstrap.min.css',
-                        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/monokai-sublime.min.css']
 
 
-#external_stylesheets=[dbc.themes.CYBORG]
-
-
-external_scripts = ['https://code.jquery.com/jquery-3.2.1.slim.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js',
-                    'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js']
-
-# no clue what these external scripts do
-#external_scripts=[dbc.]
-# Server definition
-
-server = flask.Flask(__name__)
-
-# layout options
-# https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
-
-app = dash.Dash(__name__,
-                external_stylesheets=external_stylesheets,
-                external_scripts=external_scripts,
-                server=server,
-                meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
-
-# title taht will be visible in the browser tab
-app.title = 'Open Carbonate System Alkalinity Calculations'
-
-
-# important part of code for the dash pages (to register it)
-#dash.register_page(__name__, path='/script')
-
-# for Heroku to regognize it
-server=app.server
 
 #get the current location to make the correct filepath
 
@@ -106,25 +72,7 @@ some_text = open(os.path.join(filepath, "./assets/sometext.md"), "r").read()
 
 image_path =os.path.join(filepath, "./assets/uhh-logo-web.jpg")
 
-app.index_string = '''
-<!DOCTYPE html>
-<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-'''
+
 
 # COMPONENTS
 # ==========
@@ -210,6 +158,9 @@ alkalinity_value=dcc.Input(
 # APP LAYOUT
 # ==========
 
+# id of the table object
+table_composition = "table_composition"
+
 layout = html.Div([
     dbc.Container(children=[
         # embed the image that need to be placed in the assets directory
@@ -255,7 +206,7 @@ layout = html.Div([
         #html.Tr([html.Td(['NaCO3- =   ']), html.Td(id='NaCO3_species'), html.Td("[umol/l]") ]),
         #]),
 
-        html.Div(id="table1", style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'middle'}),
+        html.Div(id=("%s" % table_composition), style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'middle'}),
         html.Br(),
         html.Br(),
 
@@ -297,7 +248,7 @@ layout = html.Div([
 # change here
 # renamed to callback instead of app.callback
 @callback(Output("indicator-graphic", "figure"),
-              Output("table1","children"),
+              Output(table_composition, "children"),
 
               # new output plot include here 18.10.2022
 
