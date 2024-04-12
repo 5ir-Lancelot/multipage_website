@@ -22,9 +22,9 @@ from dash import Dash, dcc, html, Input, Output, callback
 app = Dash(__name__,use_pages=True) #suppress_callback_exceptions=True
 
 # load content from pages directory
-from pages import page1, page2, home
+from pages import page1, page2, page3, home
 
-
+app.title = 'Open Carbonate System Alkalinity Calculations'
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -43,6 +43,10 @@ def display_page(pathname):
     #another subpage
     elif pathname == '/page2':
         return page2.layout
+
+    # another subpage
+    elif pathname == '/page3':
+        return page3.layout
 
     # the root page
     elif pathname == '/':
