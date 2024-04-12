@@ -18,10 +18,10 @@ Project/ \
 |-- app.py \
 |  \
 |-- pages/  \
-|   |page2.py   \
-|   |page3.py  \
-|   |-- assets/   \
-|   |   |-- stuff   \
+|-----|page2.py   \
+|-----|page3.py  \
+|-----|assets/   \
+|---------|-- stuff   \
 |   |    \
 |-- README   \
 
