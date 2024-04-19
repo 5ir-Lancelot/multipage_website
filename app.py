@@ -9,7 +9,7 @@ example from :
 
 https://dash.plotly.com/urls
 
-
+Two or more apps might not be needed, maybe only one app can just change the page content. Update comes tomorrow.
 '''
 
 
