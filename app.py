@@ -458,7 +458,7 @@ page2_layout = html.Div([
                           dbc.Col(children=[alkalinity_value], className="col-md-8")]),
         html.Br(),
         html.Br(),
-        dcc.Graph(id="indicator-graphic", style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle', 'height': '80vh'}),
+        dcc.Graph(id="indicator-graphic", style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle', 'height': '100vh'}),
         # old settings
         # 'height': '90vh'
         # , 'display': 'inline-block', 'vertical-align': 'middle'
@@ -845,21 +845,26 @@ def update_graph_2(T_input,CO2_input,TA_input):
         # DIC of the solution
         DIC = (sol.total('CO2',units='mol')+sol.total('HCO3',units='mol')+sol.total('CO3',units='mol')) #convert it to mol
 
-        #make the etxra dot for the current DIC value
+        #make the etxra dot for the current DIC value. Mert: Changed slightly the size of the dot
         fig.add_trace(go.Scatter(x=[pH], y=[DIC], mode='markers', name='DIC solution', marker=dict(
                 color='LightSkyBlue',
-                size=50,
+                size=15,
                 line=dict(
                     color='MediumPurple',
-                    width=12))
+                    width=5))
                                 ), row=2, col=1)
 
 
-        # make annotation at the value slighly shiftet in the
-        fig.add_annotation(x=pH-1, y=DIC,
-                        text="pH={:.2f} <br> DIC={:.6f} mol/l <br> DIC={:.6f} g/l <br> DIC= {:.6f} ppm".format(pH, DIC, DIC*M_C,DIC*M_C*1000),
-                        showarrow=False,
-                        yshift=1, row=2, col=1)
+        # make annotation at the value slighly shiftet in the left. Mert: Modified this so it does not get blocked by the plot
+        fig.add_annotation(
+            text="pH={:.2f} <br> DIC={:.6f} mol/l <br> DIC={:.6f} g/l <br> DIC= {:.6f} ppm".format(pH, DIC, DIC * M_C, DIC * M_C * 1000),
+            showarrow=False,
+            xref="paper",  # Use paper coordinates for horizontal positioning
+            yref="paper",  # Use paper coordinates for vertical positioning
+            x=pH-2,  # Adjust the x-coordinate for horizontal positioning
+            y=0.95,  # Adjust the y-coordinate for vertical positioning
+            row=2, col=1
+        )
 
         # marker style
         # marker=dict(
