@@ -4,15 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="updated the plot size and oder">
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/multipage_website.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/narrative.md" beforeDir="false" afterPath="$PROJECT_DIR$/assets/narrative.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/narrative_improved.md" beforeDir="false" afterPath="$PROJECT_DIR$/assets/narrative_improved.md" afterDir="false" />
-    </list>
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="updated legend on the graph and ion notation" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -189,7 +181,15 @@
       <option name="project" value="LOCAL" />
       <updated>1715184455728</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="updated legend on the graph and ion notation">
+      <option name="closed" value="true" />
+      <created>1719849758480</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1719849758480</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -211,6 +211,7 @@
     <MESSAGE value="updated the .html files with datenschutz etc" />
     <MESSAGE value="updated the README" />
     <MESSAGE value="updated the plot size and oder" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated the plot size and oder" />
+    <MESSAGE value="updated legend on the graph and ion notation" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated legend on the graph and ion notation" />
   </component>
 </project>
