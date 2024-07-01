@@ -275,10 +275,10 @@ conv={'CH4': M_CH4, 'CO2': M_CO2,
 TA_s='TA [ueq/kgw]'
 T_s='water T [°C]'
 pCO2_s='air pCO2 [ppm]'
-Na_s='Na+ [umol/kgw]'
-Mg_s='Mg+2 [umol/kgw]'
-Ca_s='Ca+2 [umol/kgw]'
-K_s='K+ [umol/kgw]'
+Na_s='Na⁺ [umol/kgw]'
+Mg_s='Mg²⁺ [umol/kgw]'
+Ca_s='Ca²⁺ [umol/kgw]'
+K_s='K⁺ [umol/kgw]'
 
 
 #variables to use for the data input table
