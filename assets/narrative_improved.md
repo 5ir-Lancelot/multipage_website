@@ -5,7 +5,7 @@ _Lukas Rieder_
 Here will be my explanaition of the  equations and assumptions from the Book (Steven Emerson , John Hedges). The squared brackets imply the concentration is meant:
 
 $$ 
-c( CO_3^{-2} ) = [ CO_3^{-2} ]. 
+c( CO_3^{2-} ) = [ CO_3^{2-} ]. 
 $$
 
 Also because carbonic acid $H_2 CO_3$ is very unstable and it is difficult to distinguish it from  $[CO_{2}(aq)]$  both compounds are combined to:
@@ -35,12 +35,12 @@ All equations neccessary to describe/solve the full carbonate system are listed 
 
 1. total dissolved inorganic carbon: 
 $$ 
-DIC = [ CO_2 ] + [ HCO_3^- ] + [ CO_3^{-2} ] 
+DIC = [ CO_2 ] + [ HCO_3^- ] + [ CO_3^{2-} ] 
 $$
 
 2. alkalinity **extremely** simplified (carbonate alkalinity):  
 $$ 
-A_C=[ HCO_3^{-} ]  +2 \cdot [ CO_3^{-2} ] + [ OH^{-} ] - [ H^{+} ] 
+A_C=[ HCO_3^{-} ]  +2 \cdot [ CO_3^{2-} ] + [ OH^{-} ] - [ H^{+} ] 
 $$
 
 3. First Dissociation Constant of carbonic acid: 
@@ -50,7 +50,7 @@ $$
 
 4. Second Dissociation Constant of carbonic acid: 
 $$ 
-K_2^{'}=\frac{ [CO_3^{-2}] \cdot [H^{+} ] }{ [ HCO_3^{-} ] } 
+K_2^{'}=\frac{ [CO_3^{2-}] \cdot [H^{+} ] }{ [ HCO_3^{-} ] } 
 $$
 
 5. Solubility of Gas (Henry's law constant $H$ \[L atm / mol \] ): 
