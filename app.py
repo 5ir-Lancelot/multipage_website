@@ -216,10 +216,23 @@ lines=pd.read_table(os.path.join(filepath,"./assets/bjerrum_plot_update_phreeqpy
 DIC_line=pd.read_table(os.path.join(filepath,'./assets/open_carbonate_system_phreeqpython.csv'), sep=',', keep_default_na=False \
                        , na_filter=False, header='infer', engine='python', encoding='utf-8')
 
+
+# molar mass table
+elements=pd.read_csv(os.path.join(filepath,'./assets/Periodic Table of Elements.csv'),sep=',', keep_default_na=False \
+                       , na_filter=False, header='infer', engine='python', encoding="utf-8")
+
+# Convert the DataFrame into a dictionary
+element_weights = dict(zip(elements['Symbol'], elements['AtomicMass']))
+
+
 ## Interactors
 ## -----------
 
 #set some constants
+
+
+
+
 
 M_C=12.011 #g/mol
 M_CH4=16.04 #g/mol
@@ -264,7 +277,30 @@ conv={'CH4': M_CH4, 'CO2': M_CO2,
       'Mg+2':M_Mg,'MgCO3':M_MgCO3,
       'MgHCO3+':M_MgHCO3,'MgOH+':M_MgOH,
       'CaHCO3+':M_CaHCO3,'CaOH+':M_CaOH,
-      'K+':M_K}
+      'K+':element_weights['K'],
+      'Cl-':element_weights['Cl'],
+      'H2S':2*element_weights['H']+element_weights['S'],
+      'HS-':element_weights['H']+element_weights['S'],
+      'HSO4-':element_weights['H']+element_weights['S']+4*element_weights['O'],
+      'CaHSO4+':element_weights['Ca']+element_weights['H']+element_weights['S']+4*element_weights['O'],
+      'CaSO4':element_weights['Ca']+element_weights['S']+4*element_weights['O'],
+      'KSO4-':element_weights['K']+element_weights['S']+4*element_weights['O'],
+      'MgSO4':element_weights['Mg']+element_weights['S']+4*element_weights['O'],
+      'NaSO4-':element_weights['Na']+element_weights['S']+4*element_weights['O'],
+      'S-2':element_weights['S'],
+      'SO4-2':element_weights['S']+4*element_weights['O'],
+      'N2':2*element_weights['N'],
+      'NH3':element_weights['N']+3*element_weights['H'],
+      'NH4+':element_weights['N']+4*element_weights['H'],
+      'F-':element_weights['F'],
+      'NH4SO4-':element_weights['N']+4*element_weights['H']+element_weights['S']+4*element_weights['O'],
+      'NO2-':element_weights['N']+2*element_weights['O'],
+      'NO3-':element_weights['N']+3*element_weights['O'],
+      'HF':element_weights['H']+element_weights['F'],
+      'HF2-':element_weights['H']+2*element_weights['F'],
+      'MgF+':element_weights['H']+2*element_weights['F'],
+      'NaF':element_weights['Na']+element_weights['F']
+      }
 
 
 #put a whole table here for the input
@@ -272,19 +308,35 @@ conv={'CH4': M_CH4, 'CO2': M_CO2,
 
 #set global strings for the variables
 
-TA_s='TA [ueq/kgw]'
-T_s='water T [°C]'
+TA_s='TAcarb [ueq/kgw]'
+T_s='water T [degC]'
 pCO2_s='air pCO2 [ppm]'
+
+#cations
 Na_s='Na⁺ [umol/kgw]'
 Mg_s='Mg²⁺ [umol/kgw]'
 Ca_s='Ca²⁺ [umol/kgw]'
 K_s='K⁺ [umol/kgw]'
 
+#anions
+Cl_s='Cl- [umol/kgw]'
+SO4_s='SO₄²- [umol/kgw]'
+NO2_s='NO₃⁻ [umol/kgw]'
+F_s='F- [umol/kgw]'
+PO4_s='PO₄³⁻ [umol/kgw]'
+
+
+
 
 #variables to use for the data input table
-params = [
-    TA_s, T_s, pCO2_s, Na_s,
-    Mg_s, Ca_s,K_s]
+params = [TA_s, T_s, pCO2_s]
+
+cations=[Na_s, Mg_s, Ca_s, K_s,]
+
+
+anions=[Cl_s, SO4_s, NO2_s, F_s]
+
+
 
 #set the range for the slider
 T_range=[0,80]
@@ -319,14 +371,15 @@ page1_layout = html.Div([
         ]),
         #input whole editable data table
         html.Br(),
-        html.H2('Input table :'),
+        html.H2('Input tables :'),
         html.B('Enter all the observed parameters here in this table. Default is starting with 0 for everything (closed system with pure water):'),
         html.Br(),
         html.Br(),
         dcc.Markdown(input_text,mathjax=True),
         html.Br(),
+        html.H2('Basic parameters :'),
         dash_table.DataTable(
-                id='table-editing-simple',
+                id='table-bulk',
                 columns=(
                     [{'id': 'Model', 'name': 'sample'}] +
                     [{'id': p, 'name': p} for p in params]
@@ -356,48 +409,8 @@ page1_layout = html.Div([
                         },
                         {
                             'if': {
-                                'filter_query': '{'+Na_s+'}=0',
-                                'column_id': Na_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
-                                'filter_query': '{'+Mg_s+'}=0',
-                                'column_id': Mg_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
-                                'filter_query': '{'+Ca_s+'}=0',
-                                'column_id': Ca_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
-                                'filter_query': '{' + Ca_s + '}=0',
-                                'column_id': Ca_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
                                 'filter_query': '{' + pCO2_s + '}=0',
                                 'column_id': pCO2_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
-                                'filter_query': '{' + K_s + '}=0',
-                                'column_id': K_s
                             },
                             'backgroundColor': 'tomato',
                             'color': 'black'
@@ -405,6 +418,114 @@ page1_layout = html.Div([
 
                     ]
             ),
+        html.H2('Cations :'),
+        dash_table.DataTable(
+                        id='table-cations',
+                        columns=(
+                            [{'id': 'Model', 'name': 'sample'}] +
+                            [{'id': p, 'name': p} for p in cations]
+                        ),
+                        data=[
+                            dict(Model=i, **{param: 0 for param in cations})
+                            for i in range(1, 2)
+                        ],
+                        editable=True,
+                        #make some color code for the columns with zero
+                        style_data_conditional=[
+                                {
+                                    'if': {
+                                        'filter_query': '{'+Na_s+'}=0',
+                                        'column_id': Na_s
+                                    },
+                                    'backgroundColor': 'tomato',
+                                    'color': 'black'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{'+Mg_s+'}=0',
+                                        'column_id': Mg_s
+                                    },
+                                    'backgroundColor': 'tomato',
+                                    'color': 'black'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{'+Ca_s+'}=0',
+                                        'column_id': Ca_s
+                                    },
+                                    'backgroundColor': 'tomato',
+                                    'color': 'black'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{' + Ca_s + '}=0',
+                                        'column_id': Ca_s
+                                    },
+                                    'backgroundColor': 'tomato',
+                                    'color': 'black'
+                                },
+                                {
+                                    'if': {
+                                        'filter_query': '{' + K_s + '}=0',
+                                        'column_id': K_s
+                                    },
+                                    'backgroundColor': 'tomato',
+                                    'color': 'black'
+                                }
+
+                            ]
+                    ),
+        html.H2('Anions :'),
+        html.Br(),
+        dash_table.DataTable(
+                                id='table-anions',
+                                columns=(
+                                    [{'id': 'Model', 'name': 'sample'}] +
+                                    [{'id': p, 'name': p} for p in anions]
+                                ),
+                                data=[
+                                    dict(Model=i, **{param: 0 for param in anions})
+                                    for i in range(1, 2)
+                                ],
+                                editable=True,
+                                #make some color code for the columns with zero
+                                style_data_conditional=[
+                                        {
+                                            'if': {
+                                                'filter_query': '{'+Cl_s+'}=0',
+                                                'column_id': Cl_s
+                                            },
+                                            'backgroundColor': 'tomato',
+                                            'color': 'black'
+                                        },
+                                        {
+                                            'if': {
+                                                'filter_query': '{'+SO4_s+'}=0',
+                                                'column_id': SO4_s
+                                            },
+                                            'backgroundColor': 'tomato',
+                                            'color': 'black'
+                                        },
+                                        {
+                                            'if': {
+                                                'filter_query': '{'+NO2_s+'}=0',
+                                                'column_id': NO2_s
+                                            },
+                                            'backgroundColor': 'tomato',
+                                            'color': 'black'
+                                        },
+                                        {
+                                            'if': {
+                                                'filter_query': '{' + F_s + '}=0',
+                                                'column_id': F_s
+                                            },
+                                            'backgroundColor': 'tomato',
+                                            'color': 'black'
+                                        },
+
+                                    ]
+                            ),
+
 
         html.H2('Output tables :'),
         html.Br(),
@@ -506,17 +627,35 @@ page2_layout = html.Div([
     [Output("table1", "children"),
      Output("table2", "children"),
      Output("table3", "children")],
-    [Input('table-editing-simple', 'data'),
-     Input('table-editing-simple', 'columns')],
+    [Input('table-bulk', 'data'), #1 bulk table
+     Input('table-bulk', 'columns'), #1 bulk table
+     Input('table-cations', 'data'), #2 cation table
+     Input('table-cations', 'columns'),  # 2 cation table
+     Input('table-anions', 'data'), #3 anion table
+     Input('table-anions', 'columns')], #2 anion table
 )
 
-def update_graph(rows, columns):
+def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_data, anions_columns):
+
+        #merge data inputs
+        # Process input tables into DataFrames
+        df_bulk = pd.DataFrame(bulk_data, columns=[col['name'] for col in bulk_columns])
+        df_cations = pd.DataFrame(cations_data, columns=[col['name'] for col in cations_columns])
+        df_anions = pd.DataFrame(anions_data, columns=[col['name'] for col in anions_columns])
+
+        # Ensure all DataFrames are numeric (float)
+        df_bulk = df_bulk.apply(pd.to_numeric, errors='coerce')
+        df_cations = df_cations.apply(pd.to_numeric, errors='coerce')
+        df_anions = df_anions.apply(pd.to_numeric, errors='coerce')
+
+        # Combine all DataFrames into a single one
+        df = pd.concat([df_bulk, df_cations, df_anions], axis=1)
 
         # getting all the data from the input table
-        df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
+        #df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
 
         #make whole dataframe to float
-        df = df.apply(pd.to_numeric, errors='coerce')
+        #df = df.apply(pd.to_numeric, errors='coerce')
 
         #define output table
 
@@ -542,17 +681,17 @@ def update_graph(rows, columns):
                                 'Ca': np.nan_to_num(df.loc[k,Ca_s]),
                                 'Mg': np.nan_to_num(df.loc[k,Mg_s]),
                                 # include the anions
-                                #'F': np.nan_to_num(an[('IC_F', '[umol_l]')]),
-                                #'Cl': np.nan_to_num(an[('IC_Cl', '[umol_l]')]),
-                                #'N(3)': np.nan_to_num(an[('IC_NO2', '[umol_l]')]),  # N(-3) stands for NO2-
-
+                                'F': np.nan_to_num(df.loc[k,F_s]),
+                                'Cl': np.nan_to_num(df.loc[k,Cl_s]),
+                                'N(3)': np.nan_to_num(df.loc[k,NO2_s]),  # N(-3) stands for NO2-
+                                'S': np.nan_to_num(df.loc[k, SO4_s]),   # S will be recognized as SO4  in the vitens.dat database
                                 # enter total inorganic carbon (C or C(4))
                                 # include CO2 as carbon (IV) oxide  (CO2) all C in the configuration
                                 # 'C(4)':DIC,
                                 # test different notation
                                 #'C(4)': DIC,
                                 #enter the alklainity (as CO3)
-                                'Alkalinity':np.nan_to_num(df.loc[k,TA_s]),
+                                'Alkalinity':np.nan_to_num(df.loc[k,TA_s]), # phreeqc adds alkalinity as carbonate alkalinity
                                 })
 
             #closed system case no CO2 interaction
