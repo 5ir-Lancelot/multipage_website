@@ -418,6 +418,7 @@ page1_layout = html.Div([
 
                     ]
             ),
+        html.Br(),
         html.H2('Cations :'),
         dash_table.DataTable(
                         id='table-cations',
@@ -475,6 +476,7 @@ page1_layout = html.Div([
 
                             ]
                     ),
+        html.Br(),
         html.H2('Anions :'),
         html.Br(),
         dash_table.DataTable(
@@ -526,7 +528,7 @@ page1_layout = html.Div([
                                     ]
                             ),
 
-
+        html.Br(),
         html.H2('Output tables :'),
         html.Br(),
 
