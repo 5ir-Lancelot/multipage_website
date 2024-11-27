@@ -906,9 +906,30 @@ def update_graph_2(T_input,CO2_input,TA_input):
         # Return fallback outputs for invalid inputs
         figure = {
             "data": [],
-            "layout": {"title": "Invalid Input", "annotations": [{"text": "Please enter valid numbers"}]}
+            "layout": {
+                "title": "Oops! Something Went Wrong",
+                "annotations": [{
+                    "text": "Uh-oh, looks like you've entered something funky!<br>Please double-check your inputs.<br>Remember: use '.' for decimals and skip the ','s.",
+                    "font": {"size": 30, "color": "red"},  # Red color for annotation text
+                    "x": 2.5,  # Center the annotation
+                    "y": 3.5,  # Place it towards the top
+                    "showarrow": False
+                }]
+            }
         }
-        table = html.Div("Error: Invalid input. Please check your entries. Use '.' for decimals and do not use any ','.")
+
+        # Customize the text size, position, and color for the HTML message
+        table = html.Div([
+            html.Div(
+                "Uh-oh, looks like you've entered something funky! Please double-check your inputs. Remember: use '.' for decimals and skip the ','s.",
+                style={
+                    'fontSize': '24px',  # Make the font larger
+                    'textAlign': 'center',  # Center the text
+                    'marginTop': '20px',  # Add some space at the top
+                    'color': 'red'  # Make the text red
+                }
+            )
+        ])
         return figure, table
 
     else:
