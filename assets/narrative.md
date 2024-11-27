@@ -58,3 +58,4 @@ In the plot the Electrical Conductivity of the solution is displayed. Keep in mi
 The electrical conductivity however has a very strong temperature dependence as you can see when playing around with the slider.
 
 
+

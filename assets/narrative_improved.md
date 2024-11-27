@@ -120,3 +120,4 @@ undersaturated, or supersaturated with respect to the given mineral:
 - SI = 0 	$IAP$ = $K_{sp}$ saturated  (in chem equilibrium)
 - SI < 0 	$IAP$ < $K_{sp}$ undersaturated
 - SI > 0 	$IAP$ > $K_{sp}$ supersaturated
+
