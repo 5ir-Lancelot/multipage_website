@@ -75,6 +75,8 @@ very important to run a specific file as the main script
 the run command need to be changed on the digitalocean website
 
 go to app -> settings -> commands -> run command -> edit
+
+
 """
 
 '''
@@ -637,6 +639,7 @@ page2_layout = html.Div([
      Input('table-anions', 'columns')], #2 anion table
 )
 
+
 def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_data, anions_columns):
 
         #merge data inputs
@@ -866,19 +869,63 @@ def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_
      Input("CO2_input", "value"),
      Input("TA_input", "value")],
 )
+
+
 def update_graph_2(T_input,CO2_input,TA_input):
+
+    # Helper function to sanitize input to make sure that commas dont cause error (the ',' will just be removed)
+    # the real decimal seperator '.' will be accepted
+    def sanitize_input(input_value):
+        #print(f"Sanitizing input: {input_value}")
+
+        if input_value is None:
+            #print("Input is None")
+            return None
+
+        # Check if the input is already a number (either float or int)
+        if isinstance(input_value, (int, float)):
+            #print(f"Input is already a number: {input_value}")
+            return float(input_value)
+
+        try:
+            # Replace commas with empty strings to handle cases like "1,000"
+            sanitized_value = float(input_value.replace(",", ""))
+            #print(f"Sanitized value: {sanitized_value}")
+            return sanitized_value
+        except (ValueError, AttributeError) as e:
+            #print(f"Failed to sanitize input: {e}")
+            return None
+
+    # Sanitize all inputs
+    T = sanitize_input(T_input)
+    CO2 = sanitize_input(CO2_input)
+    TA = sanitize_input(TA_input)
+
+    # Check if any input is invalid
+    if T is None or CO2 is None or TA is None:
+        # Return fallback outputs for invalid inputs
+        figure = {
+            "data": [],
+            "layout": {"title": "Invalid Input", "annotations": [{"text": "Please enter valid numbers"}]}
+        }
+        table = html.Div("Error: Invalid input. Please check your entries. Use '.' for decimals.")
+        return figure, table
+
+    else:
+
+
         # removed log scale
-        alk=TA_input
+        alk=TA
         
         #convert umol/L concentartion in mmol/L  
         c=alk*1e-3
 
 
-        sol=pp.add_solution_simple({'NaHCO3':c},temperature=T_input) # in Phreeqc default units are mmol/kgw
+        sol=pp.add_solution_simple({'NaHCO3':c},temperature=T) # in Phreeqc default units are mmol/kgw
         
         
         # the pressure default unit is atm so I convert the ppm to atm
-        p=CO2_input*1e-6
+        p=CO2*1e-6
         
         # the function equilizie needs the phreeqc input the partial pressure in negative log10 scale
 
@@ -1029,7 +1076,7 @@ def update_graph_2(T_input,CO2_input,TA_input):
 
         # add the last plot
     
-    # input is the array and then it is defined which columns are x and y
+        # input is the array and then it is defined which columns are x and y
     
         fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO2_frac'],  mode='lines+markers',name=x_bar[2] ),row=1, col=1)
         fig.add_trace(go.Scatter(x=lines['pH'],y=lines['HCO3_frac'], mode='lines+markers',name=x_bar[0] ),row=1, col=1)
@@ -1068,10 +1115,6 @@ def update_graph_2(T_input,CO2_input,TA_input):
                 yshift=1,row=1, col=1)
         
         #get the concentrations of all the  species in the system
-        # total
-
-
-        cNa=sol.elements['Na']*1e+6
 
         #get concentration of all species
         df=pd.DataFrame.from_dict(sol.species, orient='index', columns=['concentration [mol/L]'])
