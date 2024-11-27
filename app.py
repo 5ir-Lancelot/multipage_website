@@ -275,10 +275,10 @@ conv={'CH4': M_CH4, 'CO2': M_CO2,
 TA_s='TA [ueq/kgw]'
 T_s='water T [°C]'
 pCO2_s='air pCO2 [ppm]'
-Na_s='Na+ [umol/kgw]'
-Mg_s='Mg+2 [umol/kgw]'
-Ca_s='Ca+2 [umol/kgw]'
-K_s='K+ [umol/kgw]'
+Na_s='Na⁺ [umol/kgw]'
+Mg_s='Mg²⁺ [umol/kgw]'
+Ca_s='Ca²⁺ [umol/kgw]'
+K_s='K⁺ [umol/kgw]'
 
 
 #variables to use for the data input table
@@ -458,7 +458,7 @@ page2_layout = html.Div([
                           dbc.Col(children=[alkalinity_value], className="col-md-8")]),
         html.Br(),
         html.Br(),
-        dcc.Graph(id="indicator-graphic", style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle', 'height': '80vh'}),
+        dcc.Graph(id="indicator-graphic", style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle', 'height': '150vh'}),
         # old settings
         # 'height': '90vh'
         # , 'display': 'inline-block', 'vertical-align': 'middle'
@@ -783,7 +783,7 @@ def update_graph_2(T_input,CO2_input,TA_input):
         
 
         #
-        x_bar=['DIC','HCO<sub>3</sub><sup>-</sup><sub>(aq)','CO<sub>3</sub><sup>-2</sup><sub>(aq)','CO<sub>2</sub><sub>(aq)','H<sup>+</sup>','OH<sup>-</sup>']
+        x_bar=['HCO<sub>3</sub><sup>-</sup><sub>(aq)','CO<sub>3</sub><sup>2-</sup><sub>(aq)','CO<sub>2</sub><sub>(aq)','H<sup>+</sup>','OH<sup>-</sup>']
         html.Div(["H", html.Sub(2), "H", html.Sup(2)])
         
         # a=sol.total('HCO3')
@@ -803,28 +803,28 @@ def update_graph_2(T_input,CO2_input,TA_input):
 
         #also add H+ and OH-
 
-        y_bar=[sol.total_element('C', units='mmol')*1000,sol.total('HCO3')*1000,sol.total('CO3')*1000,sol.total('CO2')*1000,sol.species['H+']*1e6,sol.species['OH-']*1e6]
+        y_bar=[sol.total('HCO3')*1000,sol.total('CO3')*1000,sol.total('CO2')*1000,sol.species['H+']*1e6,sol.species['OH-']*1e6]
         
         water_type=['freshwater']  # here one can add freshwater etc if it would be interesting in this case
         
-        fig.add_trace(go.Bar(name=x_bar[3], x=water_type, y=[y_bar[3]]),row=1, col=1) 
+        fig.add_trace(go.Bar(name='aqueus composition', x=x_bar, y=y_bar),row=3, col=1)
         
-        fig.add_trace(go.Bar(name=x_bar[1], x=water_type, y=[y_bar[1]]),row=1, col=1)
+        #fig.add_trace(go.Bar(name=x_bar[1], x=['CO3'], y=[y_bar[1]],width=2),row=3, col=1)
         
-        fig.add_trace(go.Bar(name=x_bar[2], x=water_type, y=[y_bar[2]]),row=1, col=1)
+        #fig.add_trace(go.Bar(name=x_bar[2], x=['CO2(aq)'], y=[y_bar[2]],width=2),row=3, col=1)
 
-        fig.add_trace(go.Bar(name=x_bar[4], x=water_type, y=[y_bar[4]]), row=1, col=1)
+        #fig.add_trace(go.Bar(name=x_bar[4], x=['H+'], y=[y_bar[4]],width=2), row=3, col=1)
 
-        fig.add_trace(go.Bar(name=x_bar[5], x=water_type, y=[y_bar[5]]), row=1, col=1)
+        #fig.add_trace(go.Bar(name=x_bar[5], x=['OH-'], y=[y_bar[5]],width=2), row=3, col=1)
 
         #update label of the yaxis
-        fig.update_yaxes(title_text='c [ueq/L]', row=1, col=1)
+        fig.update_yaxes(title_text='c [umol/L]', row=3, col=1)
 
 
         #pls work
         
         # Change the bar mode
-        fig.update_layout(barmode='stack')
+        #fig.update_layout(barmode='stack')
         
 
 
@@ -845,21 +845,26 @@ def update_graph_2(T_input,CO2_input,TA_input):
         # DIC of the solution
         DIC = (sol.total('CO2',units='mol')+sol.total('HCO3',units='mol')+sol.total('CO3',units='mol')) #convert it to mol
 
-        #make the etxra dot for the current DIC value
+        #make the etxra dot for the current DIC value. Mert: Changed slightly the size of the dot
         fig.add_trace(go.Scatter(x=[pH], y=[DIC], mode='markers', name='DIC solution', marker=dict(
                 color='LightSkyBlue',
-                size=50,
+                size=15,
                 line=dict(
                     color='MediumPurple',
-                    width=12))
+                    width=5))
                                 ), row=2, col=1)
 
 
-        # make annotation at the value slighly shiftet in the
-        fig.add_annotation(x=pH-1, y=DIC,
-                        text="pH={:.2f} <br> DIC={:.6f} mol/l <br> DIC={:.6f} g/l <br> DIC= {:.6f} ppm".format(pH, DIC, DIC*M_C,DIC*M_C*1000),
-                        showarrow=False,
-                        yshift=1, row=2, col=1)
+        # make annotation at the value slighly shiftet in the left. Mert: Modified this so it does not get blocked by the plot
+        fig.add_annotation(
+            text="pH={:.2f} <br> DIC={:.6f} mol/l <br> DIC={:.6f} g/l <br> DIC= {:.6f} ppm".format(pH, DIC, DIC * M_C, DIC * M_C * 1000),
+            showarrow=False,
+            xref="paper",  # Use paper coordinates for horizontal positioning
+            yref="paper",  # Use paper coordinates for vertical positioning
+            x=pH-2,  # Adjust the x-coordinate for horizontal positioning
+            y=0.95,  # Adjust the y-coordinate for vertical positioning
+            row=2, col=1
+        )
 
         # marker style
         # marker=dict(
@@ -885,15 +890,15 @@ def update_graph_2(T_input,CO2_input,TA_input):
     
     # input is the array and then it is defined which columns are x and y
     
-        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO2_frac'],  mode='lines+markers',name=x_bar[3] ),row=3, col=1)
-        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['HCO3_frac'], mode='lines+markers',name=x_bar[1] ),row=3, col=1)
-        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO3_frac'], mode='lines+markers',name=x_bar[2]),row=3, col=1)
+        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO2_frac'],  mode='lines+markers',name=x_bar[2] ),row=1, col=1)
+        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['HCO3_frac'], mode='lines+markers',name=x_bar[0] ),row=1, col=1)
+        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO3_frac'], mode='lines+markers',name=x_bar[1]),row=1, col=1)
 
         
         
-        fig.update_yaxes(title_text="Fraction in decimal ",title_standoff =4, ticksuffix='', row=3, col=1)
+        fig.update_yaxes(title_text="Fraction in decimal ",title_standoff =4, ticksuffix='', row=1, col=1)
         
-        fig.update_xaxes(title_text="pH", row=3, col=1)
+        fig.update_xaxes(title_text="pH", row=1, col=1)
         
         #pH of the solution
         pH=sol.pH
@@ -919,7 +924,7 @@ def update_graph_2(T_input,CO2_input,TA_input):
         fig.add_annotation(x=12, y=0.7,
                 text="pH={:.2f} <br> EC={:.2f} uS/cm".format(pH,SC),
                 showarrow=False,
-                yshift=1,row=3, col=1)
+                yshift=1,row=1, col=1)
         
         #get the concentrations of all the  species in the system
         # total
