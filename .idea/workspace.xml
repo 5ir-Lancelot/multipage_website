@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="added cations and anions blocks">
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="made website more safe (dont allow comma in input and say error otherwise)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -233,7 +231,23 @@
       <option name="project" value="LOCAL" />
       <updated>1732120288404</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="made website more safe (dont allow comma in input and say error otherwise)">
+      <option name="closed" value="true" />
+      <created>1732724044484</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1732724044484</updated>
+    </task>
+    <task id="LOCAL-00017" summary="made website more safe (dont allow comma in input and say error otherwise)">
+      <option name="closed" value="true" />
+      <created>1732724111071</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1732724111071</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -258,6 +272,7 @@
     <MESSAGE value="updated legend on the graph and ion notation" />
     <MESSAGE value="new table header with superscripts" />
     <MESSAGE value="added cations and anions blocks" />
-    <option name="LAST_COMMIT_MESSAGE" value="added cations and anions blocks" />
+    <MESSAGE value="made website more safe (dont allow comma in input and say error otherwise)" />
+    <option name="LAST_COMMIT_MESSAGE" value="made website more safe (dont allow comma in input and say error otherwise)" />
   </component>
 </project>
