@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="made website more safe (dont allow comma in input and say error otherwise)">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;5ir-Lancelot&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/5ir-Lancelot/multipage_website.git&quot;,
+    &quot;accountId&quot;: &quot;1d46aa32-e90e-432c-a69b-eb7c6eb7871b&quot;
+  }
+}</component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2e8rtUZfBo60PH13uA8J2P0TWPu" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/u301072/PycharmProjects/multipage_website/pages/assets&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.notifications&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website\pages\assets" />
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website\pages" />
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website\templates" />
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website\pages" />
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website" />
+      <recent name="C:\Users\u301072\PycharmProjects\multipage_website\templates" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="app" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="multipage_website" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-975db3bf15a3-31b6be0877a2-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-241.18034.82" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="" />
+      <created>1711297261004</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1711297261004</updated>
+    </task>
+    <task id="LOCAL-00001" summary="make the app work">
+      <option name="closed" value="true" />
+      <created>1712932629854</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1712932629854</updated>
+    </task>
+    <task id="LOCAL-00002" summary="upload new app">
+      <option name="closed" value="true" />
+      <created>1712933318597</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1712933318597</updated>
+    </task>
+    <task id="LOCAL-00003" summary="last update from lukas for today">
+      <option name="closed" value="true" />
+      <created>1712935248952</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1712935248952</updated>
+    </task>
+    <task id="LOCAL-00004" summary="some README update">
+      <option name="closed" value="true" />
+      <created>1712935637352</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1712935637352</updated>
+    </task>
+    <task id="LOCAL-00005" summary="updated the .html files with datenschutz etc">
+      <option name="closed" value="true" />
+      <created>1712935799406</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1712935799406</updated>
+    </task>
+    <task id="LOCAL-00006" summary="updated the README">
+      <option name="closed" value="true" />
+      <created>1712936070158</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1712936070159</updated>
+    </task>
+    <task id="LOCAL-00007" summary="updated the README">
+      <option name="closed" value="true" />
+      <created>1712936163399</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1712936163399</updated>
+    </task>
+    <task id="LOCAL-00008" summary="updated the README">
+      <option name="closed" value="true" />
+      <created>1712936306714</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1712936306714</updated>
+    </task>
+    <task id="LOCAL-00009" summary="updated the plot size and oder">
+      <option name="closed" value="true" />
+      <created>1715184455728</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1715184455728</updated>
+    </task>
+    <task id="LOCAL-00010" summary="updated legend on the graph and ion notation">
+      <option name="closed" value="true" />
+      <created>1719849758480</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1719849758480</updated>
+    </task>
+    <task id="LOCAL-00011" summary="updated legend on the graph and ion notation">
+      <option name="closed" value="true" />
+      <created>1719850396067</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1719850396067</updated>
+    </task>
+    <task id="LOCAL-00012" summary="new table header with superscripts">
+      <option name="closed" value="true" />
+      <created>1719856472695</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1719856472695</updated>
+    </task>
+    <task id="LOCAL-00013" summary="new table header with superscripts">
+      <option name="closed" value="true" />
+      <created>1732101396307</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1732101396307</updated>
+    </task>
+    <task id="LOCAL-00014" summary="added cations and anions blocks">
+      <option name="closed" value="true" />
+      <created>1732119780813</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1732119780813</updated>
+    </task>
+    <task id="LOCAL-00015" summary="added cations and anions blocks">
+      <option name="closed" value="true" />
+      <created>1732120288403</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1732120288404</updated>
+    </task>
+    <task id="LOCAL-00016" summary="made website more safe (dont allow comma in input and say error otherwise)">
+      <option name="closed" value="true" />
+      <created>1732724044484</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1732724044484</updated>
+    </task>
+    <task id="LOCAL-00017" summary="made website more safe (dont allow comma in input and say error otherwise)">
+      <option name="closed" value="true" />
+      <created>1732724111071</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1732724111071</updated>
+    </task>
+    <task id="LOCAL-00018" summary="made website more safe (dont allow comma in input and say error otherwise)">
+      <option name="closed" value="true" />
+      <created>1732726737972</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1732726737972</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="make the app work" />
+    <MESSAGE value="upload new app" />
+    <MESSAGE value="last update from lukas for today" />
+    <MESSAGE value="some README update" />
+    <MESSAGE value="updated the .html files with datenschutz etc" />
+    <MESSAGE value="updated the README" />
+    <MESSAGE value="updated the plot size and oder" />
+    <MESSAGE value="updated legend on the graph and ion notation" />
+    <MESSAGE value="new table header with superscripts" />
+    <MESSAGE value="added cations and anions blocks" />
+    <MESSAGE value="made website more safe (dont allow comma in input and say error otherwise)" />
+    <option name="LAST_COMMIT_MESSAGE" value="made website more safe (dont allow comma in input and say error otherwise)" />
+  </component>
+</project>
