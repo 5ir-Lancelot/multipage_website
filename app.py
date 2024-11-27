@@ -908,7 +908,7 @@ def update_graph_2(T_input,CO2_input,TA_input):
             "data": [],
             "layout": {"title": "Invalid Input", "annotations": [{"text": "Please enter valid numbers"}]}
         }
-        table = html.Div("Error: Invalid input. Please check your entries. Use '.' for decimals.")
+        table = html.Div("Error: Invalid input. Please check your entries. Use '.' for decimals and do not use any ','.")
         return figure, table
 
     else:
