@@ -29,3 +29,4 @@ Project/ \
 # How to run it ?
 
 Check out  https://dash.plotly.com/tutorial . To launch the app, type into your terminal the command python app.py
+
