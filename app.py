@@ -1,644 +1,438 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Dec  9 14:05:38 2021
+Dash multi‑page app for “Open Carbonate System Tools”.
 
-@author: watda
-
-the framework used for this python app is Flask
-
-Developers can develop the Python backend framework any way they need, however, it was designed for applications that are open-ended.
-Flask has been used by big companies, which include LinkedIn and Pinterest.
-Compared to Django, Flask is best suited for small and easy projects.
-Thus, you can expect a web server development, support for Google App Engine as well as in-built unit testing.
-
-my app should be tidied up and inspired by Chris one
-
-path to open 
-
-
-then run it from the console anaconde prompt
-
-python my_app_freshwater.py
-
-how to make it online available:
-https://www.youtube.com/watch?v=b-M2KQ6_bM4
-
-
-1. Open Heroku website and add application   (the name of the app will be part of the url)
-2. Open Pycharm Community Verion
-3. Create new project in Pycharm Community Verion  choose virtual environment (Virtualenv)
-4. copy the files for the app in the folder of the new project 
-
-5. Manually install all necessary packages  to run the python code in the virtual env
-    important package used indirectly alwas has to be installed
-    + pip install gunicorn    
-
-6.create a requiremnets text file with all the pip install package + version
-
-7. create .gitignore file  (or just copy it from the other projects)
- the gitignore file   is a simple text file with following content:
-     venv
-     *.pyc
-     .env
-     .DS_Store
-8. create a procfile  with the content 
-    web : guincorn  appname_without.py:server
-    
-9. create a requirements file  (command in the Pycharm terminal)
-    this tells heroku which packages are necessary to run the app
-    pip freeze > requirements.txt
-    
-    
-10. log in  command in Pycharm
-    heroku login
-
-update to generate a simple requirements.txt file that just contains what was used in the given project
-
-menue -> tools -> Synch Python requirements
-
-In the procfile the python file with the real app that should be used need to be specified.
-    
-
-    
-https://github.com/Vitens/phreeqpython
-"""
-
-"""
-lukas 04.03.2024
-
-improved version allowing for more input variables (more water parameters)
-
-put a table as input
-
-
-very important to run a specific file as the main script 
-the run command need to be changed on the digitalocean website
-
-go to app -> settings -> commands -> run command -> edit
-
-
-"""
-
-'''
-update implementation on uni website
+Heavily re‑worked by Mert, and cleaned‑up.
 
 how the wsgi file should look like:
 https://community.plotly.com/t/dash-pythonanywhere-deployment-issue/5062
 
-Mert 06.05.2024 :
-Improved the layout of the app and added more functionalities such as switching between table and graph view and footer.
-
-'''
-
-import os
-import dash
+"""
+import os, flask, pandas as pd, phreeqpython, plotly.graph_objects as go
+from dash import Dash, html, dcc, dash_table, ctx 
+from dash.dash_table import Format
+from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
-import dash_defer_js_import as dji
-import flask
-import pandas as pd
-# import the package for carbonate system calculation chemistry
-import phreeqpython
-import plotly.graph_objects as go
-from dash import dcc, dash_table
-from dash import html
-from dash.dependencies import Input, Output
 from numpy import log10
 from plotly.subplots import make_subplots
-
 import numpy as np
-from dash.dependencies import Output, Input
 
-#database which should be used for the calculations
-# PhreeqPython comes standard with phreeqc.dat, pitzer.dat and vitens.dat
-pp = phreeqpython.PhreeqPython(database='vitens.dat')
+# ─────────────────────────────  CONSTANTS & STYLES  ──────────────────────────
+MAX_WIDTH = "1160px"   # global content width (≈ 12‑col Bootstrap container)
+PAD_Y     = "2rem"     # vertical padding for header / page bottom
 
-# different themes (styles of the webpage) can be found here https://bootswatch.com/
-
-# here you can search for a good free bootstrap CND and just copy the link into the external stylesheets and load it
-# https://www.bootstrapcdn.com/bootswatch/
-
-external_stylesheets = ['https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/flatly/bootstrap.min.css',
-                        #'https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/journal/bootstrap.min.css',
-                        'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/monokai-sublime.min.css']
-
-external_scripts = ['https://code.jquery.com/jquery-3.2.1.slim.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js',
-                    'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js']
-
-# Server definition
-
+# ─────────────────────────────  FLASK + DASH  ────────────────────────────────
 server = flask.Flask(__name__)
 
-# layout options
-# https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
+BOOTSWATCH = "https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/flatly/bootstrap.min.css"
+HIGHLIGHT  = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai-sublime.min.css"
+HOVER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/hover.css/2.3.1/css/hover-min.css"
 
-app = dash.Dash(__name__,
-                external_stylesheets=external_stylesheets,
-                external_scripts=external_scripts,
-                server=server,
-                meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}])
+app = Dash(
+    __name__, server=server,
+    external_stylesheets=[BOOTSWATCH, HIGHLIGHT, HOVER_CSS],
+    external_scripts=[],
+    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+    suppress_callback_exceptions=True,
+)
 
-# title taht will be visible in the browser tab
-app.title = 'Open Carbonate System Alkalinity Calculations'
+app.title = "Open Carbonate System Tools"
 
-# for Heroku to regognize it
-server=app.server
+# strip Dash's default footer
+app.index_string = """<!DOCTYPE html><html lang=\"en\"><head>{%metas%}<title>{%title%}</title>{%favicon%}{%css%}</head><body>{%app_entry%}{%config%}{%scripts%}{%renderer%}</body></html>"""
 
+# ─────────────────────────────  PATHS & HELPERS  ─────────────────────────────
+BASE_DIR  = os.path.dirname(os.path.realpath(__file__))
+ASSETS    = os.path.join(BASE_DIR, "assets")
+
+def read_asset(fname: str) -> str:
+    """Read UTF‑8 file from ./assets."""
+    return open(os.path.join(ASSETS, fname), encoding="utf-8").read()
+
+# Markdown / supporting text
+NARRATIVE_MD  = read_asset("narrative_improved.md")
+REFS_MD       = read_asset("references.md")
+SOME_TEXT_MD  = read_asset("sometext.md")
+INPUT_BOX_MD  = read_asset("Textbox_input.md")
+OUTPUT_BOX_MD = read_asset("Textbox_output.md")
+
+IMAGE_LOGO    = "/assets/uhh-logo-web.jpg"   # served by Dash `/assets` route
+
+# ─────────────────────────────  SHARED UI COMPONENTS  ───────────────────────
+
+def Footer() -> html.Footer:
+    """Single footer placed by every top‑level layout, pinned to bottom."""
+    link_style = {"margin": "0 .8rem", "color": "white", "textDecoration": "none"}
+    return html.Footer(
+        dbc.Container(
+            [
+                html.A("Impressum",       href="/impressum",        style=link_style),
+                html.A("Datenschutz",     href="/datenschutz",     style=link_style),
+                html.A("Barrierefreiheit",href="/barrierefreiheit", style=link_style),
+            ],
+            class_name="text-center",
+            style={"maxWidth": MAX_WIDTH}
+        ),
+        style={
+            "width": "100%",
+            "backgroundColor": "#333",
+            "color": "white",
+            "padding": "12px 0",
+            "marginTop": PAD_Y,
+            "marginBottom": "0",       # no gap below footer
+        },
+    )
+
+def SiteHeader(title: str, crumbs: list[tuple[str, str]] | None = None) -> html.Header:
+    """Renders the header with logo, title and a breadcrumb that has no bottom margin."""
+    # Build a manual breadcrumb so we can zero out the <ol> margin via mb-0
+    if crumbs:
+        # Create <li> items
+        nav_items = []
+        for lbl, href in crumbs[:-1]:
+            nav_items.append(
+                html.Li(html.A(lbl, href=href), className="breadcrumb-item")
+            )
+        # Last crumb is active text
+        nav_items.append(
+            html.Li(crumbs[-1][0],
+                    className="breadcrumb-item active",
+                    **{"aria-current": "page"})
+        )
+        # Wrap in <nav><ol class="breadcrumb mb-0 ps-0">...
+        breadcrumb = html.Nav(
+            html.Ol(nav_items,
+                    className="breadcrumb mb-0 ps-0",
+                    style={"marginBottom": "0"}),
+            **{"aria-label": "breadcrumb"},
+            className="mb-0"
+        )
+    else:
+        breadcrumb = None
+
+    return html.Header(
+        dbc.Container(
+            [
+                html.Img(src=IMAGE_LOGO, style={"height": "90px"}),
+                html.Div(
+                    breadcrumb,
+                    className="align-self-end"
+                )
+            ],
+            class_name="d-flex align-items-center",
+            style={
+                "maxWidth": MAX_WIDTH,
+                "paddingTop": PAD_Y,
+                "paddingBottom": PAD_Y,
+            },
+        ),
+        style={"borderBottom": "1px solid #ddd"},
+    )
+
+
+# ─────────────────────────────  LEGAL PAGES  ────────────────────────────────
+
+# the three markdown files were converted from the original HTML
+IMPRESSUM_MD    = read_asset("imprint.md")
+DATENSCHUTZ_MD  = read_asset("datenschutz.md")
+BARRECHT_MD     = read_asset("barrierefreiheit.md")
+
+def legal_layout(raw_md: str, title: str, path: str) -> html.Div:
+    return html.Div([
+        SiteHeader(title, [("Home", "/"), (title, path)]),
+        dbc.Container(dcc.Markdown(raw_md, className="pt-3"), style={"maxWidth": MAX_WIDTH}),
+        Footer(),
+    ])
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  CALCULATOR
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ──────────────────────────────────────────────────────────────────────────────
+#  PHREEQP SET‑UP
+# ──────────────────────────────────────────────────────────────────────────────
+pp = phreeqpython.PhreeqPython(database="vitens.dat")
+
+# ------------------------------------------------------------------
+#  1)  CSV / look‑up tables
+# ------------------------------------------------------------------
 filepath = os.path.split(os.path.realpath(__file__))[0]
 
-# the "r" refers to read mode
-# it need tro be a  raw string  so that the markdown text is properly loaded with all the backslashes
+lines = pd.read_table(
+    os.path.join(filepath, "assets/bjerrum_plot_update_phreeqpython.csv"),
+    sep=",", keep_default_na=False, na_filter=False, engine="python"
+)
+DIC_line = pd.read_table(
+    os.path.join(filepath, "assets/open_carbonate_system_phreeqpython.csv"),
+    sep=",", keep_default_na=False, na_filter=False, engine="python"
+)
+elements = pd.read_csv(
+    os.path.join(filepath, "assets/Periodic Table of Elements.csv"),
+    sep=",", keep_default_na=False, na_filter=False, engine="python"
+)
+element_weights = dict(zip(elements["Symbol"], elements["AtomicMass"]))
 
-narrative_text = open(os.path.join(filepath, "assets/narrative_improved.md"), "r").read()
-refs_text = open(os.path.join(filepath, "assets/references.md"), "r").read()
-some_text = open(os.path.join(filepath, "assets/sometext.md"), "r").read()
-input_text=open(os.path.join(filepath, "assets/Textbox_input.md"), "r").read()
-output_text=open(os.path.join(filepath, "assets/Textbox_output.md"), "r").read()
+# ------------------------------------------------------------------
+#  2)  (Molar) constants
+# ------------------------------------------------------------------
+M_C     = 12.011
+M_CH4   = 16.04
+M_CO2   = 44.01
+M_CO3   = 60.01
+M_H     = 1.00784
+M_H2    = M_H * 2
+M_H2O   = 18.01528
+M_HCO3  = 61.0168
+M_Na    = 22.98976928
+M_NaCO3 = M_CO3 + M_Na
+M_NaHCO3= M_HCO3 + M_Na
+M_OH    = 17.008
+M_NaOH  = M_Na + M_OH
+M_O     = 15.999
+M_O2    = M_O * 2
+M_Mg    = 24.305
+M_Ca    = 40.078
+M_K     = 39.0983
+M_CaCO3 = M_Ca + M_C + 3 * M_O
+M_MgCO3 = M_Mg + M_C + 3 * M_O
+M_MgHCO3= M_Mg + M_HCO3
+M_CaHCO3= M_Ca + M_HCO3
+M_CaOH  = M_Ca + M_OH
+M_MgOH  = M_Mg + M_OH
 
-image_path = 'assets/uhh-logo-web.jpg'
+# ------------------------------------------------------------------
+#  3)  conversion dict  (species → g per mol)
+# ------------------------------------------------------------------
+conv = {
+    "CH4": M_CH4, "CO2": M_CO2, "CO3-2": M_CO3, "H+": M_H, "H2": M_H2,
+    "H2O": M_H2O, "HCO3-": M_HCO3, "Na+": M_Na, "NaCO3-": M_NaCO3,
+    "NaHCO3": M_NaHCO3, "NaOH": M_NaOH, "O2": M_O2, "OH-": M_OH,
+    "Ca+2": M_Ca, "CaCO3": M_CaCO3, "Mg+2": M_Mg, "MgCO3": M_MgCO3,
+    "MgHCO3+": M_MgHCO3, "MgOH+": M_MgOH, "CaHCO3+": M_CaHCO3,
+    "CaOH+": M_CaOH, "K+": element_weights["K"], "Cl-": element_weights["Cl"],
+    "H2S": 2 * element_weights["H"] + element_weights["S"],
+    "HS-": element_weights["H"] + element_weights["S"],
+    "HSO4-": element_weights["H"] + element_weights["S"] + 4 * element_weights["O"],
+    "CaHSO4+": element_weights["Ca"] + element_weights["H"] + element_weights["S"] + 4 * element_weights["O"],
+    "CaSO4": element_weights["Ca"] + element_weights["S"] + 4 * element_weights["O"],
+    "KSO4-": element_weights["K"] + element_weights["S"] + 4 * element_weights["O"],
+    "MgSO4": element_weights["Mg"] + element_weights["S"] + 4 * element_weights["O"],
+    "NaSO4-": element_weights["Na"] + element_weights["S"] + 4 * element_weights["O"],
+    "S-2": element_weights["S"], "SO4-2": element_weights["S"] + 4 * element_weights["O"],
+    "N2": 2 * element_weights["N"], "NH3": element_weights["N"] + 3 * element_weights["H"],
+    "NH4+": element_weights["N"] + 4 * element_weights["H"], "F-": element_weights["F"],
+    "NH4SO4-": element_weights["N"] + 4 * element_weights["H"] + element_weights["S"] + 4 * element_weights["O"],
+    "NO2-": element_weights["N"] + 2 * element_weights["O"],
+    "NO3-": element_weights["N"] + 3 * element_weights["O"],
+    "HF": element_weights["H"] + element_weights["F"],
+    "HF2-": element_weights["H"] + 2 * element_weights["F"],
+    "MgF+": element_weights["H"] + 2 * element_weights["F"],
+    "NaF": element_weights["Na"] + element_weights["F"],
+}
 
-# mathjax is the program translating the Latex MathML with Javascript to generate html to be displayed in the browser
-# this path loads automatically the latest version
+# ------------------------------------------------------------------
+#  4)  strings for DataTable columns
+# ------------------------------------------------------------------
+TA_s     = "TAcarb [ueq/kgw]"
+T_s      = "water T [degC]"
+pCO2_s   = "air pCO2 [ppm]"
 
-# loading and configuring mathjax
-#https://docs.mathjax.org/en/v2.7-latest/configuration.html
+Na_s  = "Na⁺ [umol/kgw]"
+Mg_s  = "Mg²⁺ [umol/kgw]"
+Ca_s  = "Ca²⁺ [umol/kgw]"
+K_s   = "K⁺ [umol/kgw]"
+Cl_s  = "Cl- [umol/kgw]"
+SO4_s = "SO₄²- [umol/kgw]"
+NO2_s = "NO₃⁻ [umol/kgw]"
+F_s   = "F- [umol/kgw]"
+PO4_s = "PO₄³⁻ [umol/kgw]"
 
-#general style of the app
+params   = [TA_s, T_s, pCO2_s]
+cations  = [Na_s, Mg_s, Ca_s, K_s]
+anions   = [Cl_s, SO4_s, NO2_s, F_s]
 
-# how this app.index_string works https://dash.plotly.com/external-resources
-# HTML string is customizable but does not need to be customized
-
-app.index_string = '''
-<!DOCTYPE html>
-<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-        <style>
-            footer {
-                left: 0;
-                bottom: 0;
-                width: 100%;
-                background-color: #333;
-                color: white;
-                text-align: center;
-                padding: 10px 0;
-            }
-            footer a {
-                font-size: 16px;
-                margin: 0 5px;
-                color: white;
-                text-decoration: none;
-            }
-        </style>
-    </head>
-    <body>
-    {%app_entry%}
-    <footer>
-        {%config%}
-        {%scripts%}
-        {%renderer%}
-        <a href='/assets/imprint.html'>Impressum</a>
-        <a href='/assets/datenschutz.html'>Datenschutz</a>
-        <a href='/assets/barrierefreiheitserklaerung.html'>Barrierefreiheit</a>
-    </footer>
-    </body>
-</html>
-'''
-
-# COMPONENTS
-# ==========
-# read in the bjerrum plot csv file as lines
-lines=pd.read_table(os.path.join(filepath,"./assets/bjerrum_plot_update_phreeqpython.csv"), sep=',', keep_default_na=False \
-                    , na_filter=False, header='infer', engine='python', encoding='utf-8')
-
-
-DIC_line=pd.read_table(os.path.join(filepath,'./assets/open_carbonate_system_phreeqpython.csv'), sep=',', keep_default_na=False \
-                       , na_filter=False, header='infer', engine='python', encoding='utf-8')
-
-
-# molar mass table
-elements=pd.read_csv(os.path.join(filepath,'./assets/Periodic Table of Elements.csv'),sep=',', keep_default_na=False \
-                       , na_filter=False, header='infer', engine='python', encoding="utf-8")
-
-# Convert the DataFrame into a dictionary
-element_weights = dict(zip(elements['Symbol'], elements['AtomicMass']))
-
-
-## Interactors
-## -----------
-
-#set some constants
-
-
-
-
-
-M_C=12.011 #g/mol
-M_CH4=16.04 #g/mol
-M_CO2=44.01 #g/mol
-M_CO3=60.01 #g/mol
-M_H=1.00784 #g/mol
-M_H2=M_H*2 # g/mol
-M_H2O=18.01528 #g/mol
-M_HCO3=61.0168 # g/mol
-M_Na=22.98976928 # g/mol
-M_NaCO3=M_CO3+M_Na # g/mol
-M_NaHCO3=M_HCO3+M_Na # g/mol
-M_OH=17.008 # g/mol
-M_NaOH=M_Na+M_OH # g/mol
-M_O=15.999 # g/mol
-M_O2=M_O*2 # g/mol
-
-
-
-
-M_Mg=24.305 # g/mol
-M_Ca=40.078  # g/mol
-M_K=39.0983 #g/mol
-M_CaCO3=M_Ca+M_C+3*M_O
-M_MgCO3=M_Mg+M_C+3*M_O
-M_MgHCO3=M_Mg+M_HCO3
-M_CaHCO3=M_Ca+M_HCO3
-
-
-M_CaOH=M_Ca+M_OH
-
-M_MgOH=M_Mg+M_OH
-
-#create the converfrsion dict
-conv={'CH4': M_CH4, 'CO2': M_CO2,
-      'CO3-2': M_CO3, 'H+': M_H,
-      'H2': M_H2,'H2O': M_H2O,
-      'HCO3-': M_HCO3, 'Na+':M_Na,
-      'NaCO3-': M_NaCO3, 'NaHCO3': M_NaHCO3,
-      'NaOH': M_NaOH, 'O2': M_O2, 'OH-':M_OH,
-      'Ca+2':M_Ca,'CaCO3':M_CaCO3,
-      'Mg+2':M_Mg,'MgCO3':M_MgCO3,
-      'MgHCO3+':M_MgHCO3,'MgOH+':M_MgOH,
-      'CaHCO3+':M_CaHCO3,'CaOH+':M_CaOH,
-      'K+':element_weights['K'],
-      'Cl-':element_weights['Cl'],
-      'H2S':2*element_weights['H']+element_weights['S'],
-      'HS-':element_weights['H']+element_weights['S'],
-      'HSO4-':element_weights['H']+element_weights['S']+4*element_weights['O'],
-      'CaHSO4+':element_weights['Ca']+element_weights['H']+element_weights['S']+4*element_weights['O'],
-      'CaSO4':element_weights['Ca']+element_weights['S']+4*element_weights['O'],
-      'KSO4-':element_weights['K']+element_weights['S']+4*element_weights['O'],
-      'MgSO4':element_weights['Mg']+element_weights['S']+4*element_weights['O'],
-      'NaSO4-':element_weights['Na']+element_weights['S']+4*element_weights['O'],
-      'S-2':element_weights['S'],
-      'SO4-2':element_weights['S']+4*element_weights['O'],
-      'N2':2*element_weights['N'],
-      'NH3':element_weights['N']+3*element_weights['H'],
-      'NH4+':element_weights['N']+4*element_weights['H'],
-      'F-':element_weights['F'],
-      'NH4SO4-':element_weights['N']+4*element_weights['H']+element_weights['S']+4*element_weights['O'],
-      'NO2-':element_weights['N']+2*element_weights['O'],
-      'NO3-':element_weights['N']+3*element_weights['O'],
-      'HF':element_weights['H']+element_weights['F'],
-      'HF2-':element_weights['H']+2*element_weights['F'],
-      'MgF+':element_weights['H']+2*element_weights['F'],
-      'NaF':element_weights['Na']+element_weights['F']
-      }
-
-
-#put a whole table here for the input
-
-
-#set global strings for the variables
-
-TA_s='TAcarb [ueq/kgw]'
-T_s='water T [degC]'
-pCO2_s='air pCO2 [ppm]'
-
-#cations
-Na_s='Na⁺ [umol/kgw]'
-Mg_s='Mg²⁺ [umol/kgw]'
-Ca_s='Ca²⁺ [umol/kgw]'
-K_s='K⁺ [umol/kgw]'
-
-#anions
-Cl_s='Cl- [umol/kgw]'
-SO4_s='SO₄²- [umol/kgw]'
-NO2_s='NO₃⁻ [umol/kgw]'
-F_s='F- [umol/kgw]'
-PO4_s='PO₄³⁻ [umol/kgw]'
-
-
-
-
-#variables to use for the data input table
-params = [TA_s, T_s, pCO2_s]
-
-cations=[Na_s, Mg_s, Ca_s, K_s,]
-
-
-anions=[Cl_s, SO4_s, NO2_s, F_s]
-
-
-
-#set the range for the slider
-T_range=[0,80]
-
-T_slider=dcc.Slider(id='T_input', min=T_range[0], max=T_range[1], step=0.5, marks={x: str(x)+'°C' for x in range(T_range[0],T_range[1],10)},
-        value=20, tooltip={"placement": "bottom", "always_visible": True}, updatemode='drag')
-
-CO2_value=dcc.Input(
-        id='CO2_input',
-        placeholder='Insert CO2 value',
-        type='number',
-        value=415)
-
-alkalinity_value=dcc.Input(
-        id='TA_input',
-        placeholder='Insert TA value',
-        type='number',
-        value=2500)
+# ------------------------------------------------------------------
+#  5)  small widgets used on the “Graph” view
+# ------------------------------------------------------------------
+T_range = [0, 80]
+T_slider = dcc.Slider(
+    id="T_input", min=T_range[0], max=T_range[1], step=0.5,
+    marks={x: f"{x}°C" for x in range(T_range[0], T_range[1], 10)},
+    value=20, tooltip={"placement": "bottom", "always_visible": True},
+    updatemode="drag",
+)
+CO2_value = dcc.Input(id="CO2_input", type="number", value=415,
+                      placeholder="Insert CO₂ (ppm)")
+alkalinity_value = dcc.Input(id="TA_input", type="number", value=2500,
+                             placeholder="Insert TA")
 table_composition = "table_composition"
 
+# ───────────────────────── helper ─────────────────────────
+def make_table(
+    df: pd.DataFrame,
+    *, id: str,
+    exponent: bool = False,          # ← True ⇒ 1.23 e‑04, False ⇒ 0.000123
+) -> dash_table.DataTable:
+    """Return a nicely‑styled DataTable."""
+    num_fmt = Format.Format(
+        precision=4,
+        scheme=Format.Scheme.exponent if exponent else Format.Scheme.decimal,
+        trim=True,
+    )
+    return dash_table.DataTable(
+        id=id,
+        columns=[{"name": c, "id": c, "type": "numeric", "format": num_fmt}
+                 for c in df.columns],
+        data=df.to_dict("records"),
+        editable=True,
 
-# APP LAYOUT
-# ==========
-# here the layout of the different pages are defined, these are changed based on the button clicks, could be simplified by keeping the same layout and just changing the content that is different, for now it is kept like this. Mert 06.05.2024
-page1_layout = html.Div([
-    dbc.Container(children=[
-        html.Img(src=image_path, alt='UHH logo rot weiß png'),
-        dcc.Markdown(narrative_text, mathjax=True),        
-        dbc.Row([
-            dbc.Col(dbc.Button("Table", id="btn-page-1", n_clicks=0, color="success", className="flex items-center justify-center my-4", style={'font-size': '1.5em', 'padding': '10px', 'margin': 'auto', 'display': 'block', 'text-align': 'center', 'background-color': '#149c7d', 'pointer-events': 'none', 'width': '100%'})),
-            dbc.Col(dbc.Button("Graph", id="btn-page-2", n_clicks=0, color="success", className="flex items-center justify-center my-4", style={'font-size': '1.5em', 'padding': '10px', 'margin': 'auto', 'display': 'block', 'text-align': 'center', 'width': '100%'}))
-        ]),
-        #input whole editable data table
-        html.Br(),
-        html.H2('Input tables :'),
-        html.B('Enter all the observed parameters here in this table. Default is starting with 0 for everything (closed system with pure water):'),
-        html.Br(),
-        html.Br(),
-        dcc.Markdown(input_text,mathjax=True),
-        html.Br(),
-        html.H2('Basic parameters :'),
-        dash_table.DataTable(
-                id='table-bulk',
-                columns=(
-                    [{'id': 'Model', 'name': 'sample'}] +
-                    [{'id': p, 'name': p} for p in params]
+        style_table  = {"width": "100%", "overflowX": "auto",
+                        "border": "1px solid #dee2e6", "margin": "0 auto"},
+        style_header = {"backgroundColor": "#f8f9fa", "fontWeight": 600,
+                        "padding": "10px"},
+        style_cell   = {"padding": "8px 10px", "textAlign": "right",
+                        "fontSize": "1rem", "minWidth": "80px"},
+        style_data_conditional=[],
+    )
+
+# ─────────────────── build blank input tables ───────────────────
+basic_tbl  = make_table(                       #  ← restore “sample”
+    pd.DataFrame([dict(sample=1, **{p: 0 for p in params})]),
+    id="table-bulk"
+)
+cation_tbl = make_table(
+    pd.DataFrame([dict(sample=1, **{p: 0 for p in cations})]),
+    id="table-cations"
+)
+anion_tbl  = make_table(
+    pd.DataFrame([dict(sample=1, **{p: 0 for p in anions})]),
+    id="table-anions"
+)
+
+# highlight zeros in red
+for tbl, cols in [(basic_tbl, params), (cation_tbl, cations), (anion_tbl, anions)]:
+    tbl.style_data_conditional += [
+        {"if": {"filter_query": f"{{{c}}} = 0", "column_id": c},
+         "backgroundColor": "#ffe5e5", "color": "black"} for c in cols
+    ]
+
+# cards
+basic_card  = dbc.Card(
+    [dbc.CardHeader("Basic parameters", class_name="fw-bold"),
+     dbc.CardBody(basic_tbl)], class_name="mb-4 shadow-sm")
+cation_card = dbc.Card(
+    [dbc.CardHeader("Cations", class_name="fw-bold"),
+     dbc.CardBody(cation_tbl)], class_name="mb-4 shadow-sm")
+anion_card  = dbc.Card(
+    [dbc.CardHeader("Anions", class_name="fw-bold"),
+     dbc.CardBody(anion_tbl)], class_name="mb-4 shadow-sm")
+
+# ─────────────────── TABLE‑view layout ───────────────────
+page1_layout = html.Div(
+    [
+        dbc.Container(
+            [
+                dcc.Markdown(NARRATIVE_MD, mathjax=True),
+
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dbc.Button("Table", id="btn-page-1", n_clicks=0,
+                                       color="success", className="w-100",
+                                       style={"fontSize": "1.3em",
+                                              "backgroundColor": "#149c7d",
+                                              "pointerEvents": "none"})),
+                        dbc.Col(
+                            dbc.Button("Graph", id="btn-page-2", n_clicks=0,
+                                       color="success", className="w-100",
+                                       style={"fontSize": "1.3em"})),
+                    ],
+                    class_name="my-4",
                 ),
-                data=[
-                    dict(Model=i, **{param: 0 for param in params})
-                    for i in range(1, 2)
-                ],
-                editable=True,
-                #make some color code for the columns with zero
-                style_data_conditional=[
-                        {
-                            'if': {
-                                'filter_query': '{'+TA_s+'}=0',
-                                'column_id': TA_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
-                                'filter_query': '{'+T_s+'}=0',
-                                'column_id': T_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        },
-                        {
-                            'if': {
-                                'filter_query': '{' + pCO2_s + '}=0',
-                                'column_id': pCO2_s
-                            },
-                            'backgroundColor': 'tomato',
-                            'color': 'black'
-                        }
 
-                    ]
-            ),
-        html.Br(),
-        html.H2('Cations :'),
-        dash_table.DataTable(
-                        id='table-cations',
-                        columns=(
-                            [{'id': 'Model', 'name': 'sample'}] +
-                            [{'id': p, 'name': p} for p in cations]
+                # ---------------- INPUT ----------------
+                html.H2("Input tables"),
+                dcc.Markdown(INPUT_BOX_MD, mathjax=True),
+                basic_card,
+                cation_card,
+                anion_card,
+
+                # ---------------- OUTPUT ----------------
+                html.H2("Output tables"),
+                html.B("Resulting speciation after equilibration:"),
+                html.Div(id="table1", className="my-3"),
+                html.B("Saturation indices of possible minerals:"),
+                html.Plaintext("Oversaturated minerals are highlighted red."),
+                html.Div(id="table2", className="my-3"),
+                html.B("Bulk parameters:"),
+                html.Div(id="table3", className="my-3"),
+
+                dcc.Markdown(SOME_TEXT_MD, mathjax=True, className="mt-4"),
+                dcc.Markdown(REFS_MD,        mathjax=True, className="mt-4"),
+            ],
+            fluid=True,     # full‑width container
+        ),
+    ],
+    style={"fontSize": "1.15em",
+           "maxWidth": MAX_WIDTH,             # centre whole page
+           "margin": "0 auto"},
+)
+
+# ───────────────────────────── page‑2  (GRAPH view) ─────────────────────────
+page2_layout = html.Div(
+    [
+        dbc.Container(
+            [
+                dcc.Markdown(NARRATIVE_MD, mathjax=True),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dbc.Button("Table", id="btn-page-1", n_clicks=0,
+                                       color="success", className="w-100",
+                                       style={"fontSize": "1.5em"}),
                         ),
-                        data=[
-                            dict(Model=i, **{param: 0 for param in cations})
-                            for i in range(1, 2)
-                        ],
-                        editable=True,
-                        #make some color code for the columns with zero
-                        style_data_conditional=[
-                                {
-                                    'if': {
-                                        'filter_query': '{'+Na_s+'}=0',
-                                        'column_id': Na_s
-                                    },
-                                    'backgroundColor': 'tomato',
-                                    'color': 'black'
-                                },
-                                {
-                                    'if': {
-                                        'filter_query': '{'+Mg_s+'}=0',
-                                        'column_id': Mg_s
-                                    },
-                                    'backgroundColor': 'tomato',
-                                    'color': 'black'
-                                },
-                                {
-                                    'if': {
-                                        'filter_query': '{'+Ca_s+'}=0',
-                                        'column_id': Ca_s
-                                    },
-                                    'backgroundColor': 'tomato',
-                                    'color': 'black'
-                                },
-                                {
-                                    'if': {
-                                        'filter_query': '{' + Ca_s + '}=0',
-                                        'column_id': Ca_s
-                                    },
-                                    'backgroundColor': 'tomato',
-                                    'color': 'black'
-                                },
-                                {
-                                    'if': {
-                                        'filter_query': '{' + K_s + '}=0',
-                                        'column_id': K_s
-                                    },
-                                    'backgroundColor': 'tomato',
-                                    'color': 'black'
-                                }
-
-                            ]
-                    ),
-        html.Br(),
-        html.H2('Anions :'),
-        html.Br(),
-        dash_table.DataTable(
-                                id='table-anions',
-                                columns=(
-                                    [{'id': 'Model', 'name': 'sample'}] +
-                                    [{'id': p, 'name': p} for p in anions]
-                                ),
-                                data=[
-                                    dict(Model=i, **{param: 0 for param in anions})
-                                    for i in range(1, 2)
-                                ],
-                                editable=True,
-                                #make some color code for the columns with zero
-                                style_data_conditional=[
-                                        {
-                                            'if': {
-                                                'filter_query': '{'+Cl_s+'}=0',
-                                                'column_id': Cl_s
-                                            },
-                                            'backgroundColor': 'tomato',
-                                            'color': 'black'
-                                        },
-                                        {
-                                            'if': {
-                                                'filter_query': '{'+SO4_s+'}=0',
-                                                'column_id': SO4_s
-                                            },
-                                            'backgroundColor': 'tomato',
-                                            'color': 'black'
-                                        },
-                                        {
-                                            'if': {
-                                                'filter_query': '{'+NO2_s+'}=0',
-                                                'column_id': NO2_s
-                                            },
-                                            'backgroundColor': 'tomato',
-                                            'color': 'black'
-                                        },
-                                        {
-                                            'if': {
-                                                'filter_query': '{' + F_s + '}=0',
-                                                'column_id': F_s
-                                            },
-                                            'backgroundColor': 'tomato',
-                                            'color': 'black'
-                                        },
-
-                                    ]
-                            ),
-
-        html.Br(),
-        html.H2('Output tables :'),
-        html.Br(),
-
-        html.B('This is the resulting speciation after the water is in equilibrium with the atmosphere:'),
-        html.Br(),
-        html.Br(),
-        html.Div(id="table1", style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'middle'}),
-        html.Br(),
-        html.Br(),
-        html.B('Those are the saturation indices of minerals that can precipitate:'),
-        html.Plaintext('When the water sample reaches over-saturation the certain mineral will be highlighted in red.'),
-        html.Br(),
-        html.Br(),
-        html.Div(id="table2", style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'middle'}),
-        html.Br(),
-        html.Br(),
-        html.B('Bulk parameters:'),
-        html.Br(),
-        html.Br(),
-        html.Div(id="table3", style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'middle'}),
-        html.Br(),
-        html.Br(),
-        dcc.Markdown(some_text,mathjax=True),
-        
-        
-        
-        dcc.Markdown(refs_text,mathjax=True),
-        html.Br(),
-
-    ]),
-], style={'fontSize': '1.2em'}) # global font size setting
-page2_layout = html.Div([
-    dbc.Container(children=[
-        html.Img(src=image_path, alt='UHH logo rot weiß png'),
-        dcc.Markdown(narrative_text, mathjax=True),
-        dbc.Row([
-            dbc.Col(dbc.Button("Table", id="btn-page-1", n_clicks=0, color="success", className="flex items-center justify-center my-4", style={'font-size': '1.5em', 'padding': '10px', 'margin': 'auto', 'display': 'block', 'text-align': 'center', 'width': '100%'})),
-            dbc.Col(dbc.Button("Graph", id="btn-page-2", n_clicks=0, color="success", className="flex items-center justify-center my-4", style={'font-size': '1.5em', 'padding': '10px', 'margin': 'auto', 'display': 'block', 'text-align': 'center', 'width': '100%', 'background-color': '#149c7d', 'pointer-events': 'none'}))
-        ]),
-        #dcc.Graph(id="sir_solution", figure=display_SIR_solution(solve(delta=0.5, R0=2.67, tau=8.5))),
-        
-        html.Br(),
-        dbc.Row(children=[dbc.Col(children=["water tempearture [°C]:"], className="col-md-4"),
-                          dbc.Col(children=[T_slider], className="col-md-8")]),
-        html.Br(),
-        dbc.Row(children=[dbc.Col(children=["CO2 partial pressure to equilibrate with [ppm]:"], className="col-md-4"),
-                          dbc.Col(children=[CO2_value], className="col-md-8")]),
-        html.Br(),
-        dbc.Row(children=[dbc.Col(children=["Total Alkalinity [ueq/L] :"], className="col-md-4"),
-                          dbc.Col(children=[alkalinity_value], className="col-md-8")]),
-        html.Br(),
-        html.Br(),
-        dcc.Graph(id="indicator-graphic", style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle', 'height': '150vh'}),
-        # old settings
-        # 'height': '90vh'
-        # , 'display': 'inline-block', 'vertical-align': 'middle'
-        
-        #stuff for another diagram
-# =============================================================================
-#         dbc.Row(children=[dbc.Col(children=["Temp [°C]"], className="col-md-4"),
-#                           dbc.Col(children=[T_slider2], className="col-md-8")]),
-#         dcc.Graph(id='temperature'),
-# =============================================================================
-        html.Br(),
-        html.B('This is the resulting speciation after the water is in equilibrium with the atmosphere:'),
-        html.Br(),
-        html.Br(),
-        
-        #html.Table([
-        #html.Tr(['species]
-        #html.Tr([html.Td(['CO2(aq)= ']), html.Td(id='CO2_species'), html.Td("[umol/l]")   ]  ),
-        #html.Tr([html.Td(['HCO3- = ']), html.Td(id='HCO3_species'), html.Td("[umol/l]") ]),
-        #html.Tr([html.Td(['CO3-2 = ']), html.Td(id='CO3_species'), html.Td("[umol/l]") ]),
-        #html.Tr([html.Td(['Na+   = ']), html.Td(id='Na_species'), html.Td("[umol/l]") ]),
-        #html.Tr([html.Td(['H+    = ']), html.Td(id='H_species'), html.Td("[umol/l]") ]),
-        #html.Tr([html.Td(['OH-  =   ']), html.Td(id='OH_species'), html.Td("[umol/l]") ]),
-        #html.Tr([html.Td(['NaCO3- =   ']), html.Td(id='NaCO3_species'), html.Td("[umol/l]") ]),
-        #]),
-        
-        html.Div(id=("%s" % table_composition), style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle'}),
-        html.Br(),
-        html.Br(),
-
-        dcc.Markdown(some_text, dangerously_allow_html=True),
-        
-        
-        
-        dcc.Markdown(refs_text, dangerously_allow_html=True),
-        html.Br(),
-    ]),
-], style={'fontSize': '1.2em'}) # global font size setting)
-#
-# INTERACTION
-# ===========
-# here inputs and outputs of the application are defined
-
+                        dbc.Col(
+                            dbc.Button("Graph", id="btn-page-2", n_clicks=0,
+                                       color="success", className="w-100",
+                                       style={"fontSize": "1.5em",
+                                              "backgroundColor": "#149c7d",
+                                              "pointerEvents": "none"}),
+                        ),
+                    ],
+                    class_name="my-4",
+                ),
+                dbc.Row([dbc.Col("Water temperature [°C] :", md=4),
+                         dbc.Col(T_slider, md=8)]),
+                dbc.Row([dbc.Col("CO₂ partial pressure [ppm] :", md=4),
+                         dbc.Col(CO2_value, md=8)], className="mt-2"),
+                dbc.Row([dbc.Col("Total alkalinity [ueq/L] :", md=4),
+                         dbc.Col(alkalinity_value, md=8)], className="mt-2"),
+                dcc.Graph(id="indicator-graphic", style={"height": "150vh"}),
+                html.B("Resulting speciation after the water equilibrates with the atmosphere:"),
+                html.Div(id=table_composition, className="my-3"),
+                dcc.Markdown(SOME_TEXT_MD, mathjax=True, className="mt-4"),
+                dcc.Markdown(REFS_MD,      mathjax=True, className="mt-4"),
+            ],
+            fluid=True,
+        )
+    ],
+    style={"fontSize": "1.15em",
+           "maxWidth": MAX_WIDTH,             # centre whole page
+           "margin": "0 auto"},
+)
+# ------------------------------------------------------------------
+#  8)  MAIN CALLBACKS  (unchanged)
+#      • update_graph      – handles TABLE view output tables
+#      • update_graph_2    – produces GRAPH view figure + table
+# ------------------------------------------------------------------
 @app.callback(
     [Output("table1", "children"),
      Output("table2", "children"),
      Output("table3", "children")],
-    [Input('table-bulk', 'data'), #1 bulk table
-     Input('table-bulk', 'columns'), #1 bulk table
-     Input('table-cations', 'data'), #2 cation table
-     Input('table-cations', 'columns'),  # 2 cation table
-     Input('table-anions', 'data'), #3 anion table
-     Input('table-anions', 'columns')], #2 anion table
+    [Input("table-bulk",    "data"),   Input("table-bulk",    "columns"),
+     Input("table-cations", "data"),   Input("table-cations", "columns"),
+     Input("table-anions",  "data"),   Input("table-anions",  "columns")]
 )
-
 
 def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_data, anions_columns):
 
@@ -752,25 +546,7 @@ def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_
 
         #dash table object
 
-        tbl1=dash_table.DataTable(
-            id="format_table",
-            columns=[
-                {
-                    "name": i,
-                    "id": i,
-                    "type": "numeric",  # Required!
-                    'format': dash_table.Format.Format(precision=4, scheme=dash_table.Format.Scheme.exponent)
-                }
-                for i in df.columns
-            ],
-            data=df.to_dict("records"),
-            editable=True,
-            style_data={
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'minWidth': '100%'},
-        )
-
+        tbl1 = make_table(df,        id="table1-dt", exponent=True)   # scientific
         #output the saturation index table
 
         df_phases=pd.DataFrame.from_dict(sol.phases, orient='index', columns=['saturation index (SI)'])
@@ -781,52 +557,19 @@ def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_
         # get SI of the phases
 
 
-        tbl2 = dash_table.DataTable(
-            id="format_table",
-            columns=[
-                {
-                    "name": i,
-                    "id": i,
-                    "type": "numeric",  # Required!
-                    'format': dash_table.Format.Format(precision=4, scheme=dash_table.Format.Scheme.exponent)
-                }
-                for i in df_phases.columns
-            ],
-            data=df_phases.to_dict("records"),
-            editable=True,
-            style_data={
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'minWidth': '100%'},
-            style_data_conditional=[
+        tbl2 = make_table(df_phases, id="table2-dt", exponent=True)   # scientific
 
-                {
-                    'if': {
-                        'filter_query': '{saturation index (SI)} >0',
-                        'column_id': 'saturation index (SI)'
-                    },
-                    'backgroundColor': 'tomato',
-                    'color': 'white'
-                },
-
-                {
-                    'if': {
-                        'filter_query': '{IAP/Ksp} >1',
-                        'column_id': 'IAP/Ksp'
-                    },
-                    'backgroundColor': 'tomato',
-                    'color': 'white'
-                },
-
-            ]
-        )
-
+        tbl2.style_data_conditional.extend([   # keep SI highlighting
+            {"if": {"filter_query": "{saturation index (SI)} > 0",
+                    "column_id": "saturation index (SI)"}, "backgroundColor": "tomato", "color": "white"},
+            {"if": {"filter_query": "{IAP/Ksp} > 1",
+                    "column_id": "IAP/Ksp"},               "backgroundColor": "tomato", "color": "white"},
+        ])
 
         #
         #
 
         # calculate DIC
-
 
         d={'Dissolved inorganic carbon [mol/kgw]':[DIC],'pH':[pH],'EC [uS/cm]':[SC]}
 
@@ -835,29 +578,7 @@ def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_
         df_extra = df_extra.rename_axis(['variable']).reset_index()
 
 
-
-        tbl3 = dash_table.DataTable(
-            id="format_table",
-            columns=[
-                {
-                    "name": i,
-                    "id": i,
-                    "type": "numeric",  # Required!
-                    'format': dash_table.Format.Format(precision=4, scheme=dash_table.Format.Scheme.exponent)
-                }
-                for i in df_extra.columns
-            ],
-            data=df_extra.to_dict("records"),
-            editable=True,
-            style_data={
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'minWidth': '100%'},
-
-        )
-
-
-
+        tbl3 = make_table(df_extra,  id="table3-dt", exponent=False)  # plain
 
         return tbl1, tbl2,tbl3
 
@@ -1185,30 +906,144 @@ def update_graph_2(T_input,CO2_input,TA_input):
 
 
         return fig,tbl
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Initial page layout
-app.layout = html.Div([
-    html.Div(id='page-content', children=page1_layout),
-])
+# ----------------------  WRAPPER for Calculator  ---------------------------
 
-# Define the callback for updating the page content based on the button clicks
-@app.callback(
-    Output('page-content', 'children'),
-    [Input('btn-page-1', 'n_clicks'),
-     Input('btn-page-2', 'n_clicks')]
+def calc_layout() -> html.Div:
+    return html.Div([
+        SiteHeader("Alkalinity Tool", [("Home", "/"), ("Alkalinity Tool", "/carbonate-system-modeling")]),
+        html.Div(id="subpage-content", children=page1_layout),
+        Footer(),
+    ])
+
+# toggle Table / Graph sub‑pages
+@app.callback(Output("subpage-content", "children"),
+              Input("btn-page-1", "n_clicks"), Input("btn-page-2", "n_clicks"))
+def _toggle_pages(n1, n2):
+    return page2_layout if ctx.triggered_id == "btn-page-2" else page1_layout
+
+# ─────────────────────────────  APP LAYOUT WRAP ─────────────────────────────
+app.layout = html.Div(
+    [
+        dcc.Location(id="url"),
+        html.Div(id="page-layout", style={"flex": "1 0 auto"}),
+    ],
+    style={
+        "display": "flex",
+        "flexDirection": "column",
+        "minHeight": "100vh",    # ensure full viewport
+        "margin": "0",
+    },
 )
-def render_content(btn_page_1, btn_page_2):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return page1_layout
-    else:
-        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        if button_id == 'btn-page-1':
-            return page1_layout
-        elif button_id == 'btn-page-2':
-            return page2_layout
 
 
-if __name__ == '__main__':
-    app.run_server(debug=False)
+# ───────────────────────────────  HOME PAGE ────────────────────────────────
+def home_layout() -> html.Div:
+    # Hero + cards in one section
+    hero = html.Div(
+        [
+            html.H1(
+                "Open Carbonate System Tools",
+                className="display-3 fw-bold text-white",
+            ),
+            html.P(
+                "Interactive calculators for carbonate chemistry—built for students, researchers, and practitioners.",
+                className="lead text-white mx-auto",
+                style={"maxWidth": "700px"},
+            ),
+            # cards row inside the hero
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H5("Alkalinity Tool", className="card-title fw-semibold"),
+                                    html.P(
+                                        "Compute open‑system carbonate speciation in fresh waters with both table and graph views.",
+                                        className="card-text",
+                                    ),
+                                    dbc.Button(
+                                        "Launch Alkalinity Tool",
+                                        color="light",
+                                        href="/carbonate-system-modeling",
+                                    ),
+                                ],
+                                className="d-flex flex-column justify-content-between h-100",
+                            ),
+                            className="h-100 border-0 hvr-shadow",
+                            style={"borderRadius": "1rem", "padding": "1.5rem"},
+                        ),
+                        md=6, lg=4,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H5("DIC‑pH Explorer", className="card-title fw-semibold"),
+                                    html.P(
+                                        "Interactive pH vs. dissolved inorganic carbon curves at custom CO₂ pressures. Coming soon!",
+                                        className="card-text",
+                                    ),
+                                    dbc.Button("Coming Soon", color="secondary", disabled=True),
+                                ],
+                                className="d-flex flex-column justify-content-between h-100",
+                            ),
+                            className="h-100 border-0 hvr-shadow",
+                            style={"borderRadius": "1rem", "padding": "1.5rem"},
+                        ),
+                        md=6, lg=4,
+                    ),
+                ],
+                className="g-4 justify-content-center mt-4",
+            ),
+        ],
+        className="text-center py-5 px-3",
+        style={"backgroundColor": "#149c7d"},
+    )
 
+    return html.Div(
+        [
+            SiteHeader("Startseite"),
+            hero,
+            # push footer down
+            html.Div(style={"flex": "1 0 auto"}),
+            Footer(),
+        ],
+        style={
+            "display": "flex",
+            "flexDirection": "column",
+            "minHeight": "100vh",
+            "margin": "0",
+        },
+    )
+
+
+# ────────────────────────  PAGE ROUTING CALLBACK ─────────────────────────
+@app.callback(Output("page-layout", "children"), Input("url", "pathname"))
+def display_page(pathname: str):
+    if pathname in ("/", ""):
+        return home_layout()
+    if pathname == "/carbonate-system-modeling":
+        return calc_layout()
+    if pathname == "/impressum":
+        return legal_layout(IMPRESSUM_MD, "Impressum", pathname)
+    if pathname == "/datenschutz":
+        return legal_layout(DATENSCHUTZ_MD, "Datenschutz", pathname)
+    if pathname == "/barrierefreiheit":
+        return legal_layout(BARRECHT_MD, "Barrierefreiheit", pathname)
+
+    # 404 fallback
+    return html.Div(
+        [
+            SiteHeader("404 – Seite nicht gefunden", [("Home", "/")]),
+            dbc.Container(html.H3("Die angeforderte Seite existiert nicht."), style={"maxWidth": MAX_WIDTH}),
+            Footer(),
+        ],
+        style={"display": "flex", "flexDirection": "column", "flex": "1 0 auto"},
+    )
+
+# ─────────────────────────────  DEV ENTRY‑POINT  ────────────────────────────
+if __name__ == "__main__":
+    app.run(debug=False)
