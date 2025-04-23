@@ -30,3 +30,6 @@ Project/ \
 
 Check out  https://dash.plotly.com/tutorial . To launch the app, type into your terminal the command python app.py
 
+# Update
+
+Now all is in one single app file app.py . The home and the subpages
