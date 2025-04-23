@@ -36,7 +36,7 @@ app = Dash(
     suppress_callback_exceptions=True,
 )
 
-app.title = "Open Carbonate System Tools"
+app.title = "Modeling Tools for Geochemistry"
 
 # strip Dash's default footer
 app.index_string = """<!DOCTYPE html><html lang=\"en\"><head>{%metas%}<title>{%title%}</title>{%favicon%}{%css%}</head><body>{%app_entry%}{%config%}{%scripts%}{%renderer%}</body></html>"""
@@ -944,11 +944,11 @@ def home_layout() -> html.Div:
     hero = html.Div(
         [
             html.H1(
-                "Open Carbonate System Tools",
+                "Modeling Tools for Geochemistry",
                 className="display-3 fw-bold text-white",
             ),
             html.P(
-                "Interactive calculators for carbonate chemistry—built for students, researchers, and practitioners.",
+                "Interactive calculators for carbonate chemistry and XRF data—built for students, researchers, and practitioners.",
                 className="lead text-white mx-auto",
                 style={"maxWidth": "700px"},
             ),
