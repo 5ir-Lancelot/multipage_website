@@ -959,7 +959,7 @@ def home_layout() -> html.Div:
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.H5("Alkalinity Tool", className="card-title fw-semibold"),
+                                    html.H5("Open Carbonate System Water Speciation", className="card-title fw-semibold"),
                                     html.P(
                                         "Compute open‑system carbonate speciation in fresh waters with both table and graph views.",
                                         className="card-text",
@@ -981,9 +981,10 @@ def home_layout() -> html.Div:
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.H5("DIC‑pH Explorer", className="card-title fw-semibold"),
+                                    html.H5("XRF data simulator", className="card-title fw-semibold"),
                                     html.P(
-                                        "Interactive pH vs. dissolved inorganic carbon curves at custom CO₂ pressures. Coming soon!",
+                                        "This tool calculates theoretical oxide weight percentages from a mineral’s plain chemical formula. By parsing the formula, it derives the idealized composition of the pure mineral,"
+                                        " including contributions from common oxides. The results are useful for XRF normalization, geochemical modeling, and educational purposes.",
                                         className="card-text",
                                     ),
                                     dbc.Button("Coming Soon", color="secondary", disabled=True),
