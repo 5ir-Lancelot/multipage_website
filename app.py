@@ -16,6 +16,9 @@ import dash_bootstrap_components as dbc
 from numpy import log10
 from plotly.subplots import make_subplots
 import numpy as np
+import re
+from collections import defaultdict
+from dash.exceptions import PreventUpdate
 
 # ─────────────────────────────  CONSTANTS & STYLES  ──────────────────────────
 MAX_WIDTH = "1160px"   # global content width (≈ 12‑col Bootstrap container)
@@ -987,8 +990,11 @@ def home_layout() -> html.Div:
                                         " including contributions from common oxides. The results are useful for XRF normalization, geochemical modeling, and educational purposes.",
                                         className="card-text",
                                     ),
-                                    dbc.Button("Coming Soon", color="secondary", disabled=True),
-                                ],
+                                    dbc.Button(
+                                        "Launch XRF Tool",
+                                        color="light",
+                                        href="/xrf",
+                                    ),                                ],
                                 className="d-flex flex-column justify-content-between h-100",
                             ),
                             className="h-100 border-0 hvr-shadow",
@@ -1021,6 +1027,157 @@ def home_layout() -> html.Div:
     )
 
 
+# ────────────────  X R F   mini-app  (new)  ────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+#  pretty, read-only DataTable (zebra stripes + LOI highlighting)
+# ─────────────────────────────────────────────────────────────────────────────
+def make_table2(df: pd.DataFrame, *, id: str,
+                exponent: bool = False) -> dash_table.DataTable:
+    num_fmt = Format.Format(
+        precision=4,
+        scheme   = Format.Scheme.exponent if exponent else Format.Scheme.decimal,
+        trim     = True,
+    )
+    zebra = [{"if": {"row_index": "odd"}, "backgroundColor": "#fafafa"}]
+
+    return dash_table.DataTable(
+        id                   = id,
+        data                 = df.to_dict("records"),
+        columns              = [{"name": c, "id": c, "type": "numeric",
+                                 "format": num_fmt} for c in df.columns],
+        editable             = False,
+        sort_action          = "native",
+        style_as_list_view   = True,
+
+        # look & feel
+        style_table  = {"width":"100%","overflowX":"auto",
+                        "border":"1px solid #dee2e6","margin":"0 auto"},
+        style_header = {"backgroundColor":"#f8f9fa","fontWeight":700,
+                        "padding":"10px"},
+        style_cell   = {"padding":"6px 10px","textAlign":"right",
+                        "fontSize":"1rem","minWidth":"90px"},
+        style_data_conditional = (
+            zebra + [
+                {"if": {"filter_query": "{Oxide} contains 'LOI'"},
+                 "backgroundColor": "#fff6e6", "fontWeight": 600},
+                {"if": {"filter_query": "{Oxide} contains 'weight sum'"},
+                 "backgroundColor": "#ffe5e5", "fontWeight": 700},
+            ]
+        ),
+    )
+
+# ════════════════════════════════════════════════════════════════════════════
+#  X R F   mini-app
+# ════════════════════════════════════════════════════════════════════════════
+DATA_DIR = os.path.join(BASE_DIR, "dataset")
+
+try:
+    minerals = pd.read_csv(os.path.join(DATA_DIR,
+                       "RRUFF_Export_20191025_022204.csv"))
+except FileNotFoundError:
+    raise RuntimeError("dataset/RRUFF_Export_…csv not found")
+
+elements_tbl = pd.read_csv(os.path.join(DATA_DIR,
+                        "Periodic Table of Elements.csv"))
+ELEMENT_W = dict(zip(elements_tbl.Symbol, elements_tbl.AtomicMass))
+
+# default analytical oxides (USGS / GeoREM)
+OXIDES: dict[str,str] = {
+    "Si":"SiO2","Al":"Al2O3","Ca":"CaO","Mg":"MgO","Na":"Na2O","K":"K2O",
+    "Mn":"MnO","Ti":"TiO2","Fe":"Fe2O3","P":"P2O5",
+    "Ni":"NiO","Co":"CoO","Cr":"Cr2O3","Cu":"CuO","Zn":"ZnO",
+    "Ag":"Ag2O","Pb":"PbO","V":"V2O5","Mo":"MoO3","W":"WO3",
+    "C":"CO2","H":"H2O","S":"SO3","As":"As2O3","Sb":"Sb2O3",
+}
+
+FORMULAE = minerals["IMA Chemistry (plain)"].dropna().unique()
+FORMULAE.sort()
+
+_atom_re = re.compile(r"([A-Z][a-z]?)(\d*)")
+
+def parse_formula(formula: str) -> dict[str,int]:
+    stack, i = [defaultdict(int)], 0
+    while i < len(formula):
+        ch = formula[i]
+        if ch.isalpha():                          # element
+            m = _atom_re.match(formula, i)
+            el, n = m.group(1), int(m.group(2) or 1)
+            stack[-1][el] += n
+            i += len(m.group(0))
+        elif ch == "(":
+            stack.append(defaultdict(int)); i += 1
+        elif ch == ")":                           # group end
+            i += 1
+            m   = re.match(r"(\d*)", formula[i:])
+            mul = int(m.group(1) or 1)
+            grp = stack.pop()
+            for el, n in grp.items():
+                stack[-1][el] += n * mul
+            i += len(m.group(0))
+        else:                                     # dots, “·”, weird chars
+            i += 1
+    return dict(stack.pop())
+
+def oxide_breakdown(formula: str) -> dict[str,float]:
+    atoms    = parse_formula(formula)
+    mol_mass = sum(ELEMENT_W[e]*n for e,n in atoms.items())
+
+    wt = {}
+    for el, n in atoms.items():
+        if el not in OXIDES:      # skip elements without default oxide
+            continue
+        oxide    = OXIDES[el]
+        ox_atoms = parse_formula(oxide)
+        ox_mass  = sum(ELEMENT_W[a]*c for a,c in ox_atoms.items())
+        wt[oxide]= ox_mass * (n/ox_atoms[el]) / mol_mass * 100
+
+    wt["LOI"]          = wt.get("H2O",0) + wt.get("CO2",0)
+    wt["weight sum %"] = sum(wt.values()) - wt["LOI"]
+    return wt
+
+# ─────────────────────────────  layout  ────────────────────────────────
+def xrf_layout() -> html.Div:
+    return html.Div(
+        [
+            SiteHeader("XRF Mineral Oxides",
+                       [("Home","/"),("XRF Mineral Oxides","/xrf")]),
+            dbc.Container(
+                [
+                    html.H2("Mineral Formula Selector", className="mt-4"),
+                    dcc.Dropdown(
+                        id         = "xrf-formula",
+                        options    = [{"label": f, "value": f} for f in FORMULAE],
+                        value      = FORMULAE[0],
+                        searchable = True,
+                        clearable  = False,
+                        placeholder= "Start typing …",
+                        style      = {"width":"100%"},
+                        className  = "mb-4",
+                    ),
+                    dbc.Card(
+                        dbc.CardBody(html.Div(id="xrf-table")),
+                        class_name="shadow-sm",
+                        style={"borderRadius":"1rem"}
+                    ),
+                ],
+                style={"maxWidth": MAX_WIDTH, "paddingTop":"3rem", "paddingBottom":"4rem"},
+            ),
+            Footer(),
+        ]
+    )
+
+# ─────────────────────────────  callback  ────────────────────────────────
+@app.callback(Output("xrf-table", "children"),
+              Input("xrf-formula", "value"))
+def _update_xrf(formula):
+    if not formula:
+        raise PreventUpdate
+    wt   = oxide_breakdown(formula)
+    rows = [{"Oxide": ox, "%": round(wt.get(ox, 0.0), 3)}
+            for ox in list(OXIDES.values()) + ["LOI", "weight sum %"]]
+    return make_table2(pd.DataFrame(rows), id="xrf-dt")
+
+
 # ────────────────────────  PAGE ROUTING CALLBACK ─────────────────────────
 @app.callback(Output("page-layout", "children"), Input("url", "pathname"))
 def display_page(pathname: str):
@@ -1028,6 +1185,8 @@ def display_page(pathname: str):
         return home_layout()
     if pathname == "/carbonate-system-modeling":
         return calc_layout()
+    if pathname == "/xrf":
+        return xrf_layout() 
     if pathname == "/impressum":
         return legal_layout(IMPRESSUM_MD, "Impressum", pathname)
     if pathname == "/datenschutz":
