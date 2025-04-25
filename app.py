@@ -1030,8 +1030,7 @@ def home_layout() -> html.Div:
 # ─────────────────────────────────────────────────────────────────────────────
 #  pretty, read-only DataTable (zebra stripes + LOI + sub-items highlighting)
 # ─────────────────────────────────────────────────────────────────────────────
-def make_table2(df: pd.DataFrame, *, id: str,
-                exponent: bool = False) -> dash_table.DataTable:
+def make_table2(df: pd.DataFrame, *, id: str, exponent: bool = False) -> dash_table.DataTable:
     num_fmt = Format.Format(
         precision=4,
         scheme   = Format.Scheme.exponent if exponent else Format.Scheme.decimal,
@@ -1049,31 +1048,29 @@ def make_table2(df: pd.DataFrame, *, id: str,
         editable               = False,
         sort_action            = "native",
         style_as_list_view     = True,
-
         style_table            = {
-            "width":"100%","overflowX":"auto",
-            "border":"1px solid #dee2e6","margin":"0 auto"
+            "width": "100%", "overflowX": "auto",
+            "border": "1px solid #dee2e6", "margin": "0 auto"
         },
         style_header           = {
-            "backgroundColor":"#f8f9fa","fontWeight":700,
-            "padding":"6px 8px"
+            "backgroundColor": "#f8f9fa", "fontWeight": 700,
+            "padding": "6px 8px"
         },
         style_cell             = {
-            "padding":"4px 8px","textAlign":"right",
-            "fontSize":"0.9rem","lineHeight":"1.2","minWidth":"80px"
+            "padding": "4px 8px", "textAlign": "right",
+            "fontSize": "0.9rem", "lineHeight": "1.2", "minWidth": "80px"
         },
         style_data_conditional = (
             zebra + [
-                # LOI parent row
+                # LOI parent row highlight
                 {"if": {"filter_query": "{Oxide} = 'LOI'"},
                  "backgroundColor": "#fff6e6", "fontWeight": 600},
-                # indent any row whose Oxide starts with two spaces
-                {"if": {"filter_query": "{Oxide} contains '  '"},
-                 "paddingLeft": "1.5rem"},
-                # highlight the H2O and CO2 sub-rows
-                {"if": {"filter_query": "{Oxide} contains 'H2O'"},
-                 "backgroundColor": "#fff6e6"},
-                {"if": {"filter_query": "{Oxide} contains 'CO2'"},
+                # indent the LOI name cell only
+                {"if": {"filter_query": "{Oxide} = 'LOI'",
+                        "column_id": "Oxide"},
+                 "paddingRight": "2rem"},
+                # arrow-prefixed children share LOI highlight
+                {"if": {"filter_query": "{Oxide} contains '⤷'"},
                  "backgroundColor": "#fff6e6"},
                 # weight sum row
                 {"if": {"filter_query": "{Oxide} = 'weight sum %'"},
@@ -1085,10 +1082,10 @@ def make_table2(df: pd.DataFrame, *, id: str,
 # ════════════════════════════════════════════════════════════════════════════
 #  X R F   mini-app
 # ════════════════════════════════════════════════════════════════════════════
-DATA_DIR = os.path.join(BASE_DIR, "dataset")
-minerals = pd.read_csv(os.path.join(DATA_DIR, "RRUFF_Export_20191025_022204.csv"))
-elements_tbl = pd.read_csv(os.path.join(DATA_DIR, "Periodic Table of Elements.csv"))
-ELEMENT_W = dict(zip(elements_tbl.Symbol, elements_tbl.AtomicMass))
+DATA_DIR      = os.path.join(BASE_DIR, "dataset")
+minerals      = pd.read_csv(os.path.join(DATA_DIR, "RRUFF_Export_20191025_022204.csv"))
+elements_tbl  = pd.read_csv(os.path.join(DATA_DIR, "Periodic Table of Elements.csv"))
+ELEMENT_W     = dict(zip(elements_tbl.Symbol, elements_tbl.AtomicMass))
 
 OXIDES: dict[str,str] = {
     "Si":"SiO2","Al":"Al2O3","Ca":"CaO","Mg":"MgO","Na":"Na2O","K":"K2O",
@@ -1136,15 +1133,19 @@ def oxide_breakdown(formula: str) -> dict[str,float]:
         ox_atoms = parse_formula(oxide)
         ox_mass  = sum(ELEMENT_W[a]*c for a,c in ox_atoms.items())
         wt[oxide]= ox_mass * (n/ox_atoms[el]) / mol_mass * 100
-    wt["LOI"]          = wt.get("H2O",0) + wt.get("CO2",0)
+    wt["LOI"]          = wt.get("H2O", 0) + wt.get("CO2", 0)
     wt["weight sum %"] = sum(wt.values()) - wt["LOI"]
     return wt
 
+
 def xrf_layout() -> html.Div:
-    clean = minerals.dropna(subset=['Mineral Name','IMA Chemistry (plain)'])
+    clean   = minerals.dropna(subset=['Mineral Name', 'IMA Chemistry (plain)'])
     options = [
         {
-            "label": f"{row['Mineral Name']} ({row['IMA Chemistry (plain)']})",
+            "label": html.Span([
+                         html.B(row['Mineral Name']),
+                         f" ({row['IMA Chemistry (plain)']})"
+                     ]),
             "value": row['IMA Chemistry (plain)']
         }
         for _, row in clean.iterrows()
@@ -1154,9 +1155,18 @@ def xrf_layout() -> html.Div:
         [
             SiteHeader("XRF Mineral Oxides",
                        [("Home","/"),("XRF Mineral Oxides","/xrf")]),
+                       
             dbc.Container(
                 [
                     html.H2("Mineral Formula Selector", className="mt-4"),
+                    
+                    # ← new explanation text
+                    html.P(
+                        "Choose a mineral from the dropdown below to see its idealized oxide "
+                        "weight percentages (including LOI components).",
+                        className="my-4 text-muted"
+                    ),
+                    
                     dcc.Dropdown(
                         id          = "xrf-formula",
                         options     = options,
@@ -1180,22 +1190,25 @@ def xrf_layout() -> html.Div:
         ]
     )
 
+
 @app.callback(Output("xrf-table", "children"),
               Input("xrf-formula", "value"))
 def _update_xrf(formula):
     if not formula:
         raise PreventUpdate
+
     wt   = oxide_breakdown(formula)
     rows = []
-    # main oxides, _without_ H2O/CO2 (they'll live under LOI)
+
+    # main oxides (skip H2O/CO2—they appear under LOI)
     for ox in OXIDES.values():
-        if ox in ("H2O","CO2"):
+        if ox in ("H2O", "CO2"):
             continue
         rows.append({"Oxide": ox, "%": round(wt.get(ox, 0.0), 3)})
-    # LOI + its two children
-    rows.append({"Oxide": "LOI",   "%": round(wt["LOI"],        3)})
-    rows.append({"Oxide": "  H2O", "%": round(wt.get("H2O", 0.0), 3)})
-    rows.append({"Oxide": "  CO2", "%": round(wt.get("CO2", 0.0), 3)})
+    # LOI + its two children, arrow-prefixed
+    rows.append({"Oxide": "LOI",        "%": round(wt["LOI"],        3)})
+    rows.append({"Oxide": "⤷ H2O",      "%": round(wt.get("H2O", 0.0), 3)})
+    rows.append({"Oxide": "⤷ CO2",      "%": round(wt.get("CO2", 0.0), 3)})
     # weight sum
     rows.append({"Oxide": "weight sum %", "%": round(wt["weight sum %"], 3)})
 
