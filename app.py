@@ -1138,64 +1138,128 @@ def oxide_breakdown(formula: str) -> dict[str,float]:
     return wt
 
 
-def xrf_layout() -> html.Div:
-    clean   = minerals.dropna(subset=['Mineral Name', 'IMA Chemistry (plain)'])
-    options = [
-        {
-            "label": html.Span([
-                         html.B(row['Mineral Name']),
-                         f" ({row['IMA Chemistry (plain)']})"
-                     ]),
-            "value": row['IMA Chemistry (plain)']
-        }
-        for _, row in clean.iterrows()
-    ]
+# ────────────────  X R F   option list  (NEW)  ────────────────
+clean = minerals.dropna(subset=["Mineral Name", "IMA Chemistry (plain)"])
 
+# each value is "MineralName‖Formula"  (double-pipe is an unlikely char in names)
+FULL_OPTIONS: list[dict] = [
+    {
+        # bold name  + plain formula (unchanged visual)
+        "label": html.Span(
+            [html.B(row["Mineral Name"]), f" ({row['IMA Chemistry (plain)']})"]
+        ),
+        # unique value
+        "value": f"{row['Mineral Name']}‖{row['IMA Chemistry (plain)']}",
+        # search text (lower-case name + formula)
+        "search": f"{row['Mineral Name']} {row['IMA Chemistry (plain)']}".lower(),
+    }
+    for _, row in clean.iterrows()
+]
+
+# ─────────────────────────────────────────────────────────────────────────────
+def xrf_layout() -> html.Div:
     return html.Div(
         [
-            SiteHeader("XRF Mineral Oxides",
-                       [("Home","/"),("XRF Mineral Oxides","/xrf")]),
-                       
+            SiteHeader(
+                "XRF Mineral Oxides",
+                [("Home", "/"), ("XRF Mineral Oxides", "/xrf")],
+            ),
             dbc.Container(
                 [
                     html.H2("Mineral Formula Selector", className="mt-4"),
-                    
-                    # ← new explanation text
                     html.P(
-                        "Choose a mineral from the dropdown below to see its idealized oxide "
-                        "weight percentages (including LOI components).",
-                        className="my-4 text-muted"
+                        "Start typing a mineral name or its formula. "
+                        "The first 50 matches are shown instantly in the dropdown.",
+                        className="my-4 text-muted",
                     ),
-                    
+                    # full option list lives only in the browser
+                    dcc.Store(id="xrf-options-store", data=FULL_OPTIONS),
                     dcc.Dropdown(
                         id          = "xrf-formula",
-                        options     = options,
-                        value       = options[0]["value"] if options else None,
+                        options     = FULL_OPTIONS,            # full list available immediately
+                        value       = FULL_OPTIONS[0]["value"],# pre-select first mineral → table shows on load
                         searchable  = True,
                         clearable   = False,
                         placeholder = "Start typing …",
-                        style       = {"width":"100%"},
+                        style       = {"width": "100%"},
                         className   = "mb-4",
                     ),
                     dbc.Card(
                         dbc.CardBody(html.Div(id="xrf-table")),
                         class_name="shadow-sm",
-                        style={"borderRadius":"1rem"}
+                        style={"borderRadius": "1rem"},
                     ),
                 ],
-                style={"maxWidth": MAX_WIDTH,
-                       "paddingTop":"3rem","paddingBottom":"4rem"},
+                style={
+                    "maxWidth": MAX_WIDTH,
+                    "paddingTop": "3rem",
+                    "paddingBottom": "4rem",
+                },
             ),
             Footer(),
         ]
     )
 
+# ── super-light client-side filter (fast even on >5 000 minerals) ───────────
+app.clientside_callback(
+    """
+    /*
+       Inputs
+       ------
+       searchValue  – what the user is typing
+       allOptions   – cached full list (in dcc.Store)
+       currentValue – the item that is (or just got) selected
+
+       Strategy
+       --------
+       • Never build a huge list. Show at most 300 matches.
+       • If search box is empty just return the very first 300 minerals.
+       • Always make sure the current selection is injected so the label
+         never disappears.
+       • Because *value* is only State (not Input) the callback runs ONLY
+         when the user actually types, so clicking a mineral updates the
+         table instantly – no heavy JS rebuild on every click.
+    */
+    function (searchValue, allOptions, currentValue) {
+        const LIMIT = 300;                       // hard cap for speed
+        if (!allOptions) { return []; }
+
+        const needle = (searchValue || "").toLowerCase();
+        const out    = [];
+
+        for (let i = 0; i < allOptions.length && out.length < LIMIT; ++i) {
+            const opt = allOptions[i];
+            const text = opt.search || "";
+
+            if (!needle || text.includes(needle)) {
+                out.push(opt);
+            }
+        }
+
+        // keep the chosen mineral visible, even if it’s beyond LIMIT
+        if (currentValue && !out.some(o => o.value === currentValue)) {
+            const keep = allOptions.find(o => o.value === currentValue);
+            if (keep) { out.unshift(keep); }
+        }
+        return out;
+    }
+    """,
+    Output("xrf-formula", "options"),
+    Input("xrf-formula", "search_value"),        # fires only when typing
+    State("xrf-options-store", "data"),          # full list stays client-side
+    State("xrf-formula", "value"),               # current pick, but not a trigger
+)
+
 
 @app.callback(Output("xrf-table", "children"),
               Input("xrf-formula", "value"))
+
 def _update_xrf(formula):
     if not formula:
         raise PreventUpdate
+
+    # value is "MineralName‖Formula" – keep only the formula part
+    _, formula = formula.split("‖", 1)
 
     wt   = oxide_breakdown(formula)
     rows = []
