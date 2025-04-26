@@ -622,8 +622,9 @@ def update_graph_2(T_input, CO2_input, TA_input):
     fig.update_yaxes(title_text="fraction", row=1, col=1)
     fig.update_xaxes(title_text="pH",       row=1, col=1)
 
-    # vertical guide line at system pH
-    fig.add_vline(x=pH, line_dash="dot")
+    # vertical guide line at system pH  (rows 1 & 2 only)
+    fig.add_vline(x=pH, line_dash="dot", row=1, col=1)
+    fig.add_vline(x=pH, line_dash="dot", row=2, col=1)
 
     # annotation block
     fig.add_annotation(
