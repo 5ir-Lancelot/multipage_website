@@ -19,6 +19,8 @@ import numpy as np
 import re
 from collections import defaultdict
 from dash.exceptions import PreventUpdate
+from queue import Queue
+from contextlib import contextmanager
 
 # ─────────────────────────────  CONSTANTS & STYLES  ──────────────────────────
 MAX_WIDTH = "1160px"   # global content width (≈ 12‑col Bootstrap container)
@@ -154,7 +156,21 @@ def legal_layout(raw_md: str, title: str, path: str) -> html.Div:
 # ──────────────────────────────────────────────────────────────────────────────
 #  PHREEQP SET‑UP
 # ──────────────────────────────────────────────────────────────────────────────
-pp = phreeqpython.PhreeqPython(database="vitens.dat")
+# ────────── IPhreeqc engine pool ──────────
+POOL_SIZE = min(8, max(2, 2 * (os.cpu_count() or 2)))   # tweak if you like
+
+_pp_pool = Queue(maxsize=POOL_SIZE)
+for _ in range(POOL_SIZE):
+    _pp_pool.put(phreeqpython.PhreeqPython(database="vitens.dat"))
+
+@contextmanager
+def phreeqc_session():
+    """Hand out one engine from the pool, put it back afterwards."""
+    pp = _pp_pool.get()          # blocks if pool is empty
+    try:
+        yield pp
+    finally:
+        _pp_pool.put(pp)
 
 # ------------------------------------------------------------------
 #  1)  CSV / look‑up tables
@@ -423,492 +439,222 @@ page2_layout = html.Div(
            "maxWidth": MAX_WIDTH,             # centre whole page
            "margin": "0 auto"},
 )
-# ------------------------------------------------------------------
-#  8)  MAIN CALLBACKS  (unchanged)
-#      • update_graph      – handles TABLE view output tables
-#      • update_graph_2    – produces GRAPH view figure + table
-# ------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────────────────────
+# 8)  MAIN CALLBACKS
+#     • update_graph   – builds the three result tables (TABLE view)
+#     • update_graph_2 – builds the Plotly figure + species table (GRAPH view)
+# ─────────────────────────────────────────────────────────────────────────────
+
 @app.callback(
     [Output("table1", "children"),
      Output("table2", "children"),
      Output("table3", "children")],
     [Input("table-bulk",    "data"),   Input("table-bulk",    "columns"),
      Input("table-cations", "data"),   Input("table-cations", "columns"),
-     Input("table-anions",  "data"),   Input("table-anions",  "columns")]
+     Input("table-anions",  "data"),   Input("table-anions",  "columns")],
 )
+def update_graph(bulk_data, bulk_columns,
+                 cations_data, cations_columns,
+                 anions_data,  anions_columns):
+    # ---------- 1 | merge the three DataTables --------------------------------
+    df_bulk = pd.DataFrame(bulk_data,    columns=[c["name"] for c in bulk_columns   ]).apply(pd.to_numeric, errors="coerce")
+    df_cat  = pd.DataFrame(cations_data, columns=[c["name"] for c in cations_columns]).apply(pd.to_numeric, errors="coerce")
+    df_an   = pd.DataFrame(anions_data,  columns=[c["name"] for c in anions_columns ]).apply(pd.to_numeric, errors="coerce")
+    df      = pd.concat([df_bulk, df_cat, df_an], axis=1)
 
-def update_graph(bulk_data, bulk_columns, cations_data, cations_columns, anions_data, anions_columns):
+    # ---------- 2 | run PHREEQC for the (single) row ---------------------------
+    with phreeqc_session() as pp:
+        inp = df.iloc[0]                                    # UI is single-row
+        sol = pp.add_solution({
+            "units":      "umol/kgw",
+            "density":    1.000,
+            "temp":       inp[T_s],
+            # cations
+            "Na": np.nan_to_num(inp[Na_s]),
+            "K" : np.nan_to_num(inp[K_s]),
+            "Ca": np.nan_to_num(inp[Ca_s]),
+            "Mg": np.nan_to_num(inp[Mg_s]),
+            # anions
+            "F" : np.nan_to_num(inp[F_s]),
+            "Cl": np.nan_to_num(inp[Cl_s]),
+            "N(3)": np.nan_to_num(inp[NO2_s]),      # NO2-
+            "S" : np.nan_to_num(inp[SO4_s]),        # SO4²- (vitens.dat)
+            # alkalinity
+            "Alkalinity": np.nan_to_num(inp[TA_s]),
+        })
 
-        #merge data inputs
-        # Process input tables into DataFrames
-        df_bulk = pd.DataFrame(bulk_data, columns=[col['name'] for col in bulk_columns])
-        df_cations = pd.DataFrame(cations_data, columns=[col['name'] for col in cations_columns])
-        df_anions = pd.DataFrame(anions_data, columns=[col['name'] for col in anions_columns])
+        pCO2 = np.nan_to_num(inp[pCO2_s])
+        if pCO2 > 0:                                # open system
+            pp_atm = pCO2 * 1e-6                    # ppm → atm
+            sol.equalize(["CO2(g)"], [log10(pp_atm)])
 
-        # Ensure all DataFrames are numeric (float)
-        df_bulk = df_bulk.apply(pd.to_numeric, errors='coerce')
-        df_cations = df_cations.apply(pd.to_numeric, errors='coerce')
-        df_anions = df_anions.apply(pd.to_numeric, errors='coerce')
+    # ---------- 3 | compose the three output tables ----------------------------
+    pH  = sol.pH
+    SC  = sol.sc
+    DIC = sol.total("CO2", units="mol") + sol.total("HCO3", units="mol") + sol.total("CO3", units="mol")
 
-        # Combine all DataFrames into a single one
-        df = pd.concat([df_bulk, df_cations, df_anions], axis=1)
+    # species
+    df_sp = (pd.DataFrame.from_dict(sol.species, orient="index",
+                                    columns=["concentration [mol/kgw]"])
+                .reset_index().rename(columns={"index":"species"}))
+    df_sp["concentration [mg/kgw]"] = {k: 1000*v*conv[k] for k,v in sol.species.items()}.values()
+    df_sp["concentration [ppm]"]    = df_sp["concentration [mg/kgw]"]
+    tbl1 = make_table(df_sp, id="table1-dt", exponent=True)
 
-        # getting all the data from the input table
-        #df = pd.DataFrame(rows, columns=[c['name'] for c in columns])
+    # saturation indices
+    df_si = (pd.DataFrame.from_dict(sol.phases, orient="index",
+                                    columns=["saturation index (SI)"])
+               .reset_index().rename(columns={"index":"mineral"}))
+    df_si["IAP/Ksp"] = 10**df_si["saturation index (SI)"]
+    tbl2 = make_table(df_si, id="table2-dt", exponent=True)
+    tbl2.style_data_conditional.extend([
+        {"if": {"filter_query": "{saturation index (SI)} > 0",
+                "column_id": "saturation index (SI)"}, "backgroundColor":"tomato","color":"white"},
+        {"if": {"filter_query": "{IAP/Ksp} > 1",
+                "column_id": "IAP/Ksp"},               "backgroundColor":"tomato","color":"white"},
+    ])
 
-        #make whole dataframe to float
-        #df = df.apply(pd.to_numeric, errors='coerce')
+    # bulk numbers
+    df_bulk_out = pd.DataFrame({
+        "variable": ["Dissolved inorganic carbon [mol/kgw]", "pH", "EC [uS/cm]"],
+        "number"  : [DIC, pH, SC],
+    })
+    tbl3 = make_table(df_bulk_out, id="table3-dt")
 
-        #define output table
-
-        #df_out=
-
-        #solution function can just take single numbers so we use a for loop
-
-        #when all input is zero it is fine
-
-        for k in df.index:
-
-            # TA_s, T_s, pCO2_s, Na_s,
-            #     Mg_s, Ca_s]
-            sol = pp.add_solution({'units': 'umol/kgw',
-                                #'pH': pH,
-                                'density': 1.000,
-                                'temp': df.loc[k,T_s],
-                                # include the cations
-                                #'Li': np.nan_to_num(cat[('IC_Ca', '[umol_l]')]),
-                                'Na': np.nan_to_num(df.loc[k,Na_s]),
-                                #'N(-3)': np.nan_to_num(cat[('IC_NH4', '[umol_l]')]),  # N(-3) stands for NH4
-                                'K': np.nan_to_num(df.loc[k,K_s]),
-                                'Ca': np.nan_to_num(df.loc[k,Ca_s]),
-                                'Mg': np.nan_to_num(df.loc[k,Mg_s]),
-                                # include the anions
-                                'F': np.nan_to_num(df.loc[k,F_s]),
-                                'Cl': np.nan_to_num(df.loc[k,Cl_s]),
-                                'N(3)': np.nan_to_num(df.loc[k,NO2_s]),  # N(-3) stands for NO2-
-                                'S': np.nan_to_num(df.loc[k, SO4_s]),   # S will be recognized as SO4  in the vitens.dat database
-                                # enter total inorganic carbon (C or C(4))
-                                # include CO2 as carbon (IV) oxide  (CO2) all C in the configuration
-                                # 'C(4)':DIC,
-                                # test different notation
-                                #'C(4)': DIC,
-                                #enter the alklainity (as CO3)
-                                'Alkalinity':np.nan_to_num(df.loc[k,TA_s]), # phreeqc adds alkalinity as carbonate alkalinity
-                                })
-
-            #closed system case no CO2 interaction
-            if np.nan_to_num(df.loc[k,pCO2_s])<=0.0:
-                # pH of the solution
-                pH = sol.pH
-
-                # Specific conductance, microsiemens per centimeter.
-                SC = sol.sc
-
-                # DIC of the solution
-                DIC = (sol.total('CO2', units='mol') + sol.total('HCO3', units='mol') + sol.total('CO3',
-                                                                                                units='mol'))  # convert it to mol
-
-
-            else:
-                # the pressure default unit is atm so I convert the ppm to atm
-                p=df.loc[k,pCO2_s]*1e-6
-
-                # the function equilizie needs the phreeqc input the partial pressure in negative log10 scale
-
-                input_pCO2=log10(p)
-
-
-                # new function from phreeqc package used this time
-                # reaction with ambient CO2 pressure
-                sol.equalize(['CO2(g)'], [input_pCO2])
-
-                # pH of the solution
-                pH = sol.pH
-
-                # Specific conductance, microsiemens per centimeter.
-                SC = sol.sc
-
-                # DIC of the solution
-                DIC = (sol.total('CO2', units='mol') + sol.total('HCO3', units='mol') + sol.total('CO3',units='mol'))  # convert it to mol
-
-        #after reaction generate the output
-
-        #get concentration of all species
-        df=pd.DataFrame.from_dict(sol.species, orient='index', columns=['concentration [mol/kgw]'])
-
-        df = df.rename_axis(['species']).reset_index()
-
-
-        # dict comprehension {k: prices[k]*stock[k] for k in prices}
-
-        df['concentration [mg/kgw]']={key: 1000*value*conv[key] for key,value in sol.species.items()}.values()
-
-        df['concentration [ppm]'] = {key: 1000 * value * conv[key] for key, value in sol.species.items()}.values()
-        #format = Format(precision=4, scheme=Scheme.fixed)
-
-
-        #dash table object
-
-        tbl1 = make_table(df,        id="table1-dt", exponent=True)   # scientific
-        #output the saturation index table
-
-        df_phases=pd.DataFrame.from_dict(sol.phases, orient='index', columns=['saturation index (SI)'])
-
-        df_phases = df_phases.rename_axis(['mineral']).reset_index()
-
-        df_phases['IAP/Ksp']=10**df_phases['saturation index (SI)']
-        # get SI of the phases
-
-
-        tbl2 = make_table(df_phases, id="table2-dt", exponent=True)   # scientific
-
-        tbl2.style_data_conditional.extend([   # keep SI highlighting
-            {"if": {"filter_query": "{saturation index (SI)} > 0",
-                    "column_id": "saturation index (SI)"}, "backgroundColor": "tomato", "color": "white"},
-            {"if": {"filter_query": "{IAP/Ksp} > 1",
-                    "column_id": "IAP/Ksp"},               "backgroundColor": "tomato", "color": "white"},
-        ])
-
-        #
-        #
-
-        # calculate DIC
-
-        d={'Dissolved inorganic carbon [mol/kgw]':[DIC],'pH':[pH],'EC [uS/cm]':[SC]}
-
-        df_extra=pd.DataFrame.from_dict(d,orient='index',columns=['number'])
-
-        df_extra = df_extra.rename_axis(['variable']).reset_index()
-
-
-        tbl3 = make_table(df_extra,  id="table3-dt", exponent=False)  # plain
-
-        return tbl1, tbl2,tbl3
-
-
+    return tbl1, tbl2, tbl3
+# ─────────────────────────────────────────────────────────────────────────────
+#  update_graph_2  – GRAPH view (figure + species table)
+# ─────────────────────────────────────────────────────────────────────────────
 @app.callback(
     [Output("indicator-graphic", "figure"),
-     Output(table_composition, "children")],
-    [Input("T_input", "value"),
-     Input("CO2_input", "value"),
+     Output(table_composition,   "children")],
+    [Input("T_input",  "value"),
+     Input("CO2_input","value"),
      Input("TA_input", "value")],
 )
+def update_graph_2(T_input, CO2_input, TA_input):
+
+    # ---------- 1 | sanitise numeric inputs ----------------------------------
+    def _clean(x):
+        if x is None:               return None
+        if isinstance(x, (int,float)) : return float(x)
+        try:    return float(str(x).replace(",", ""))
+        except: return None
+
+    T, CO2, TA = map(_clean, (T_input, CO2_input, TA_input))
+    if None in (T, CO2, TA):
+        stub  = {"data":[], "layout":{"title":"Invalid input"}}
+        warn  = html.Div("Check your numbers …", style={"color":"red","fontSize":"24px"})
+        return stub, warn
+
+    # ---------- 2 | build the PHREEQC solution --------------------------------
+    try:
+        with phreeqc_session() as pp:
+            # TA is already µeq / kgw  → use the same figure as µmol for Na and Alk
+            sol = pp.add_solution({
+                "units"     : "umol/kgw",
+                "temp"      : T,
+                "Alkalinity": TA,     # as carbonate alkalinity
+                "Na"        : TA,     # monovalent counter-ion keeps charge neutral
+            })
+
+            pCO2_atm = CO2 * 1e-6                    # ppm → atm
+            sol.equalize(["CO2(g)"], [log10(pCO2_atm)])
+    except Exception as err:
+        stub = {"data":[], "layout":{"title":"PHREEQC could not converge"}}
+        warn = html.Div(str(err), style={"whiteSpace":"pre-wrap",
+                                         "fontFamily":"monospace",
+                                         "color":"crimson"})
+        return stub, warn
+
+    # ---------- 3 | pull numbers we’ll need ----------------------------------
+    pH  = sol.pH
+    SC  = sol.sc
+    DIC = (sol.total("CO2",units="mol") +
+           sol.total("HCO3",units="mol") +
+           sol.total("CO3", units="mol"))
+
+    # ---------- 4 | Plotly figure --------------------------------------------
+    fig = make_subplots(
+        rows=3, cols=1,
+        subplot_titles=("Inorganic carbon components<br>in the solution",
+                        "DIC(T, CO₂, pH)",
+                        "Fractions of DIC"),
+        vertical_spacing=0.09
+    )
+    fig.update_layout(
+        height=1200,
+        title="Equilibrium solution for a pure carbonate system",
+        font_family="Courier New",
+        title_font_color="red",
+        font_size=18,
+        legend_title_font_color="green",
+    )
+
+    # (row 3) - bar chart of major species
+    labels  = ["HCO<sub>3</sub><sup>-</sup>(aq)",
+               "CO<sub>3</sub><sup>2-</sup>(aq)",
+               "CO<sub>2</sub>(aq)",
+               "H<sup>+</sup>",
+               "OH<sup>-</sup>"]
+    values  = [sol.total("HCO3")*1000,
+               sol.total("CO3") *1000,
+               sol.total("CO2") *1000,
+               sol.species["H+"]*1e6,
+               sol.species["OH-"]*1e6]
+    fig.add_trace(go.Bar(x=labels, y=values, name="aqueous"), row=3, col=1)
+    fig.update_yaxes(title_text="c [µmol L⁻¹]", row=3, col=1)
+
+    # (row 2) - DIC reference curve + simulation point
+    fig.add_trace(go.Scatter(x=DIC_line["pH"], y=DIC_line["DIC"],
+                             mode="lines", name="reference 415 ppm / 25 °C"),
+                  row=2, col=1)
+    fig.add_trace(go.Scatter(x=[pH], y=[DIC],
+                             mode="markers",
+                             marker=dict(size=14, line=dict(width=2)),
+                             name="solution"), row=2, col=1)
+    fig.update_yaxes(title_text="DIC [mol L⁻¹]", type="log", row=2, col=1)
+
+    # (row 1) - Bjerrum fractions
+    fig.add_trace(go.Scatter(x=lines["pH"], y=lines["CO2_frac"],  name="CO₂(aq)"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=lines["pH"], y=lines["HCO3_frac"], name="HCO₃⁻"),   row=1, col=1)
+    fig.add_trace(go.Scatter(x=lines["pH"], y=lines["CO3_frac"],  name="CO₃²⁻"),   row=1, col=1)
+    fig.update_yaxes(title_text="fraction", row=1, col=1)
+    fig.update_xaxes(title_text="pH",       row=1, col=1)
+
+    # vertical guide line at system pH
+    fig.add_vline(x=pH, line_dash="dot")
+
+    # annotation block
+    fig.add_annotation(
+        xref="paper", yref="paper",
+        x=0.02, y=0.96,
+        text=f"pH = {pH:.2f}<br>DIC = {DIC:.4e} mol L⁻¹<br>EC = {SC:.1f} µS cm⁻¹",
+        showarrow=False, align="left",
+        bgcolor="rgba(255,255,255,0.7)"
+    )
+
+    # ---------- 5 | Species table under the plot -----------------------------
+    df_sp = (pd.DataFrame.from_dict(sol.species, orient="index",
+                                    columns=["concentration [mol/L]"])
+               .reset_index().rename(columns={"index":"species"}))
+    df_sp["concentration [mg/L]"] = {k:1000*v*conv[k] for k,v in sol.species.items()}.values()
+    df_sp["concentration [ppm]"]  = df_sp["concentration [mg/L]"]
+
+    tbl = dash_table.DataTable(
+        data    = df_sp.to_dict("records"),
+        columns = [{"name":c,"id":c,"type":"numeric",
+                    "format":dash_table.Format.Format(precision=4,
+                                                      scheme=dash_table.Format.Scheme.exponent)}
+                   for c in df_sp.columns],
+        style_data={"whiteSpace":"normal","height":"auto","minWidth":"100%"},
+        editable=False,
+        id="format_table",
+    )
+
+    return fig, tbl
 
 
-def update_graph_2(T_input,CO2_input,TA_input):
-
-    # Helper function to sanitize input to make sure that commas dont cause error (the ',' will just be removed)
-    # the real decimal seperator '.' will be accepted
-    def sanitize_input(input_value):
-        #print(f"Sanitizing input: {input_value}")
-
-        if input_value is None:
-            #print("Input is None")
-            return None
-
-        # Check if the input is already a number (either float or int)
-        if isinstance(input_value, (int, float)):
-            #print(f"Input is already a number: {input_value}")
-            return float(input_value)
-
-        try:
-            # Replace commas with empty strings to handle cases like "1,000"
-            sanitized_value = float(input_value.replace(",", ""))
-            #print(f"Sanitized value: {sanitized_value}")
-            return sanitized_value
-        except (ValueError, AttributeError) as e:
-            #print(f"Failed to sanitize input: {e}")
-            return None
-
-    # Sanitize all inputs
-    T = sanitize_input(T_input)
-    CO2 = sanitize_input(CO2_input)
-    TA = sanitize_input(TA_input)
-
-    # Check if any input is invalid
-    if T is None or CO2 is None or TA is None:
-        # Return fallback outputs for invalid inputs
-        figure = {
-            "data": [],
-            "layout": {
-                "title": "Oops! Something Went Wrong",
-                "annotations": [{
-                    "text": "Uh-oh, looks like you've entered something funky!<br>Please double-check your inputs.<br>Remember: use '.' for decimals and skip the ','s.",
-                    "font": {"size": 30, "color": "red"},  # Red color for annotation text
-                    "x": 2.5,  # Center the annotation
-                    "y": 3.5,  # Place it towards the top
-                    "showarrow": False
-                }]
-            }
-        }
-
-        # Customize the text size, position, and color for the HTML message
-        table = html.Div([
-            html.Div(
-                "Uh-oh, looks like you've entered something funky! Please double-check your inputs. Remember: use '.' for decimals and skip the ','s.",
-                style={
-                    'fontSize': '24px',  # Make the font larger
-                    'textAlign': 'center',  # Center the text
-                    'marginTop': '20px',  # Add some space at the top
-                    'color': 'red'  # Make the text red
-                }
-            )
-        ])
-        return figure, table
-
-    else:
-
-
-        # removed log scale
-        alk=TA
-        
-        #convert umol/L concentartion in mmol/L  
-        c=alk*1e-3
-
-
-        sol=pp.add_solution_simple({'NaHCO3':c},temperature=T) # in Phreeqc default units are mmol/kgw
-        
-        
-        # the pressure default unit is atm so I convert the ppm to atm
-        p=CO2*1e-6
-        
-        # the function equilizie needs the phreeqc input the partial pressure in negative log10 scale
-
-        input_pCO2=log10(p)
-        
-
-        # new function from phreeqc package used this time
-        # reaction with ambient CO2 pressure
-        sol.equalize(['CO2(g)'], [input_pCO2])
-        
-        
-
-        #plotly command for plots
-        # very simple plot that already works 
-        #fig= px.line(x=np.linspace(0, 10, 1000),y=T*np.linspace(0, 10, 1000))
-        
-        #line break in plotly strings <br>
-        
-        #marker_color defines the different bar colors (it can be also dependent on paramameters, continiuos or distinct)
-        # the numbers refer to different colors ( I dont know the exact colors)
-
-        # Lukas change rows and columns to stack the plots below each other and not side by side
-
-        fig = make_subplots(rows=3, cols=1, subplot_titles=('Inorganic carbon components <br> in the solution','DIC(T,CO2_atm,pH)',
-                                                        "Fractions of <br> DIC(T,CO2_atm,pH)") ,column_widths=[1])
-        
-        # all possible layout settings
-        # https://plotly.com/python/reference/layout/
-        
-        fig.update_layout(
-                font_family="Courier New",
-                font_size=20,
-                font_color="black",
-                title_font_family="Courier New",
-                title_font_size=29,
-                title_font_color="red",
-                legend_title_font_color="green",
-                #height=1800, # global plot height
-                #width='90vh', # dynamic plot width (adjusted to browser window)u
-                title_text="Equilibrium Solution for pure Carbonate System",
-                #legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-                )
-        
-
-        #
-        x_bar=['HCO<sub>3</sub><sup>-</sup><sub>(aq)','CO<sub>3</sub><sup>2-</sup><sub>(aq)','CO<sub>2</sub><sub>(aq)','H<sup>+</sup>','OH<sup>-</sup>']
-        html.Div(["H", html.Sub(2), "H", html.Sup(2)])
-        
-        # a=sol.total('HCO3')
-
-        #b=sol.total('CO3')
-
-        #c=sol.total('CO2')
-
-        #get the total dissolved inorganc carbon
-        #sol.total_element('C', units='mmol')
-        
-        
-        # print(solution.species['HCO3-'])
-        # everything in umol/l
-
-        #for species the output is mol
-
-        #also add H+ and OH-
-
-        y_bar=[sol.total('HCO3')*1000,sol.total('CO3')*1000,sol.total('CO2')*1000,sol.species['H+']*1e6,sol.species['OH-']*1e6]
-        
-        water_type=['freshwater']  # here one can add freshwater etc if it would be interesting in this case
-        
-        fig.add_trace(go.Bar(name='aqueus composition', x=x_bar, y=y_bar),row=3, col=1)
-        
-        #fig.add_trace(go.Bar(name=x_bar[1], x=['CO3'], y=[y_bar[1]],width=2),row=3, col=1)
-        
-        #fig.add_trace(go.Bar(name=x_bar[2], x=['CO2(aq)'], y=[y_bar[2]],width=2),row=3, col=1)
-
-        #fig.add_trace(go.Bar(name=x_bar[4], x=['H+'], y=[y_bar[4]],width=2), row=3, col=1)
-
-        #fig.add_trace(go.Bar(name=x_bar[5], x=['OH-'], y=[y_bar[5]],width=2), row=3, col=1)
-
-        #update label of the yaxis
-        fig.update_yaxes(title_text='c [umol/L]', row=3, col=1)
-
-
-        #pls work
-        
-        # Change the bar mode
-        #fig.update_layout(barmode='stack')
-        
-
-
-        
-        # attention range is in log so 10^0  to 10^6
-        
-        
-        
-        
-        # create DIC plot from the input data
-        fig.add_trace(go.Scatter(x=DIC_line['pH'], y=DIC_line['DIC'], mode='lines+markers', name='DIC reference <br> 415ppm , 25°C'), row=2, col=1)
-
-
-        #add a single point (pH,DIC) of the real simulation
-        # pH of the solution
-        pH = sol.pH
-
-        # DIC of the solution
-        DIC = (sol.total('CO2',units='mol')+sol.total('HCO3',units='mol')+sol.total('CO3',units='mol')) #convert it to mol
-
-        #make the etxra dot for the current DIC value. Mert: Changed slightly the size of the dot
-        fig.add_trace(go.Scatter(x=[pH], y=[DIC], mode='markers', name='DIC solution', marker=dict(
-                color='LightSkyBlue',
-                size=15,
-                line=dict(
-                    color='MediumPurple',
-                    width=5))
-                                ), row=2, col=1)
-
-
-        # make annotation at the value slighly shiftet in the left. Mert: Modified this so it does not get blocked by the plot
-        fig.add_annotation(
-            text="pH={:.2f} <br> DIC={:.6f} mol/l <br> DIC={:.6f} g/l <br> DIC= {:.6f} ppm".format(pH, DIC, DIC * M_C, DIC * M_C * 1000),
-            showarrow=False,
-            xref="paper",  # Use paper coordinates for horizontal positioning
-            yref="paper",  # Use paper coordinates for vertical positioning
-            x=pH-2,  # Adjust the x-coordinate for horizontal positioning
-            y=0.95,  # Adjust the y-coordinate for vertical positioning
-            row=2, col=1
-        )
-
-        # marker style
-        # marker=dict(
-        #             color='LightSkyBlue',
-        #             size=120,
-        #             line=dict(
-        #                 color='MediumPurple',
-        #                 width=12
-        #             )
-        #         )
-
-        fig.update_yaxes(title_text="concentration C [mol/L]",type='log', row=2, col=1)
-
-        #fig.add_trace(go.Bar(name=x_bar[0], x=['DIC'], y=[y_bar[0]]),row=2, col=1)
-        #fig.update_yaxes(range=[0,10000],row=2, col=1)
-
-
-        # add trace will add multiple independent lines
-        # row and col so determine where to put the plots
-
-
-        # add the last plot
-    
-        # input is the array and then it is defined which columns are x and y
-    
-        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO2_frac'],  mode='lines+markers',name=x_bar[2] ),row=1, col=1)
-        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['HCO3_frac'], mode='lines+markers',name=x_bar[0] ),row=1, col=1)
-        fig.add_trace(go.Scatter(x=lines['pH'],y=lines['CO3_frac'], mode='lines+markers',name=x_bar[1]),row=1, col=1)
-
-        
-        
-        fig.update_yaxes(title_text="Fraction in decimal ",title_standoff =4, ticksuffix='', row=1, col=1)
-        
-        fig.update_xaxes(title_text="pH", row=1, col=1)
-        
-        #pH of the solution
-        pH=sol.pH
-        
-        # electrical conductivity of the solution
-        # SC
-        
-
-        # Specific conductance, microsiemens per centimeter. 
-        SC=sol.sc
-        
-        
-        
-        # Add shapes
-        # draw pH line and make an annotation
-        fig.update_layout(
-                shapes=[
-                        #draw a shape in the third plot   
-                        #the reference is the second xref yref
-                        dict(type="line", xref="x3", yref='y3',
-                                x0=pH, y0=0, x1=pH, y1=1),])
-        
-        fig.add_annotation(x=12, y=0.7,
-                text="pH={:.2f} <br> EC={:.2f} uS/cm".format(pH,SC),
-                showarrow=False,
-                yshift=1,row=1, col=1)
-        
-        #get the concentrations of all the  species in the system
-
-        #get concentration of all species
-        df=pd.DataFrame.from_dict(sol.species, orient='index', columns=['concentration [mol/L]'])
-
-        df = df.rename_axis(['species']).reset_index()
-
-
-        # dict comprehension {k: prices[k]*stock[k] for k in prices}
-
-        df['concentration [mg/L]']={key: 1000*value*conv[key] for key,value in sol.species.items()}.values()
-
-        df['concentration [ppm]'] = {key: 1000 * value * conv[key] for key, value in sol.species.items()}.values()
-        #format = Format(precision=4, scheme=Scheme.fixed)
-
-
-        #dash table object
-
-        tbl=dash_table.DataTable(
-            id="format_table",
-            columns=[
-                {
-                    "name": i,
-                    "id": i,
-                    "type": "numeric",  # Required!
-                    'format': dash_table.Format.Format(precision=4, scheme=dash_table.Format.Scheme.exponent)
-                }
-                for i in df.columns
-            ],
-            data=df.to_dict("records"),
-            editable=True,
-            style_data={
-                'whiteSpace': 'normal',
-                'height': 'auto',
-                'minWidth': '100%'},
-        )
-        #alka_str='You have selected TA={:.2f} [ueq/L]'.format(alk)
-
-        #fig.update_layout(height=600, width=800, title_text=r"$\alpha Simulation of Dissolved Carbon Dioxide <br> (assume open system in equilibrium) <br> <br>$")
-
-        #it is not possible to add latex in interactive dash
-
-        #the ouputs are arranged in the way like the app.callback function defines them
-        # the order has to be followed strictly
-        # here i have added c = alkalinity
-
-        # use the dash table  for the html output https://dash.plotly.com/datatable
-
-
-        return fig,tbl
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ----------------------  WRAPPER for Calculator  ---------------------------
