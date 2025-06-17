@@ -5,7 +5,7 @@ In aquatic geochemistry, a relative CBE within ±5% is generally considered acce
 The relative charge-balance error (CBE) is calculated as:
 
 $$
-\text{CBE [%]} = \frac{\left| \sum \text{Cations} - \sum \text{Anions} \right|}{\left( \sum \text{Cations} + \sum \text{Anions} \right)} \times 100
+\text{CBE [%]} = \frac{\sum \text{Cations} - \left| \sum \text{Anions} \right| }{ \sum \text{Cations} + \left| \sum \text{Anions} \right|} \times 100
 $$
 
 where concentrations are expressed in milliequivalents per liter \[meq/L\].
