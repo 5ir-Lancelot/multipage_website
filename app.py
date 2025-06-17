@@ -1223,7 +1223,8 @@ for _ion in ["cb-mg", "cb-ca", "cb-na", "cb-k", "cb-ta", "cb-cl", "cb-so4", "cb-
 
     @app.callback(Output(_ion, "value"), Input(inc_id, "n_clicks"), Input(dec_id, "n_clicks"), State(_ion, "value"), prevent_initial_call=True)
     def _stepper(inc, dec, value, _ion=_ion, inc_id=inc_id, dec_id=dec_id):
-        value = value or 0
+        value = str(value).replace(",", ".") if value is not None else "0" # added for input error
+        value = float(value)  # added to avoid input errors
         trigger = ctx.triggered_id
         if trigger == inc_id:
             value += 0.5
