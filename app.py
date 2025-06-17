@@ -1129,7 +1129,7 @@ def cb_layout() -> html.Div:
             ion_row("Na⁺",  "cb-na", 469, "mmol"),
             ion_row("K⁺",   "cb-k",  10.2,  "mmol"),
             html.H5("Anions", className="fw-semibold mt-4"),
-            ion_row("Total Alk (eq)", "cb-ta", 2.3, "eq"),
+            ion_row("Total Alkalinity (TA)", "cb-ta", 2.3, "meq"),
             ion_row("Cl⁻",  "cb-cl", 546, "mmol"),
             ion_row("SO₄²⁻","cb-so4", 28.2, "mmol"),
             ion_row("NO₃⁻", "cb-no3", 0,   "mmol"),
@@ -1258,14 +1258,14 @@ def _update_balance(mg, ca, na, k, ta, cl, so4, no3, unit, density):
     anions_eq  = (cl + so4 * 2 + no3) / 1000.0 + ta/1000  # TA also needs to be divided by 1000
 
     # ── charge-balance error ────────────────────────────────────────
-    cbe_abs = abs(cations_eq - anions_eq)                 # in eq
-    denom   = (cations_eq + anions_eq) / 2.0
-    cbe_rel = (cbe_abs / denom * 100) if denom else 0.0   # in %
+    cbe_total = cations_eq - anions_eq                 # error in charge eq
+    denom   = (cations_eq + anions_eq) / 2.0           #
+    cbe_rel = (cbe_total / denom * 100) if denom else 0.0   # relative error in %
 
     # badge colour: red if outside ±5 %
     colour = "danger" if cbe_rel > 5 else "success"
 
-    return f"{cbe_abs:.4f}", f"{cbe_rel:.2f} %", colour
+    return f"{cbe_total:.4f}", f"{cbe_rel:.2f} %", colour
 
 
 # ────────────────────────  PAGE ROUTING CALLBACK ─────────────────────────
