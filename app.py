@@ -1124,13 +1124,13 @@ def cb_layout() -> html.Div:
                    className="text-muted small mt-2"),
             html.Hr(),
             html.H5("Cations", className="fw-semibold mt-2"),
-            ion_row("Mg²⁺", "cb-mg", 53, "mmol"),
+            ion_row("Mg²⁺", "cb-mg", 53.6, "mmol"),
             ion_row("Ca²⁺", "cb-ca", 10.3, "mmol"),
-            ion_row("Na⁺",  "cb-na", 468, "mmol"),
-            ion_row("K⁺",   "cb-k",  10,  "mmol"),
+            ion_row("Na⁺",  "cb-na", 469, "mmol"),
+            ion_row("K⁺",   "cb-k",  10.2,  "mmol"),
             html.H5("Anions", className="fw-semibold mt-4"),
             ion_row("Total Alk (eq)", "cb-ta", 2.3, "eq"),
-            ion_row("Cl⁻",  "cb-cl", 545, "mmol"),
+            ion_row("Cl⁻",  "cb-cl", 546, "mmol"),
             ion_row("SO₄²⁻","cb-so4", 28.2, "mmol"),
             ion_row("NO₃⁻", "cb-no3", 0,   "mmol"),
         ]),
@@ -1255,7 +1255,7 @@ def _update_balance(mg, ca, na, k, ta, cl, so4, no3, unit, density):
 
     # ── equivalents of charge (mol · kg⁻¹) ──────────────────────────
     cations_eq = (mg * 2 + ca * 2 + na + k) / 1000.0
-    anions_eq  = (cl + so4 * 2 + no3) / 1000.0 + ta  # TA is already in eq
+    anions_eq  = (cl + so4 * 2 + no3) / 1000.0 + ta/1000  # TA also needs to be divided by 1000
 
     # ── charge-balance error ────────────────────────────────────────
     cbe_abs = abs(cations_eq - anions_eq)                 # in eq
