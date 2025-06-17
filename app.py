@@ -60,6 +60,8 @@ REFS_MD       = read_asset("references.md")
 SOME_TEXT_MD  = read_asset("sometext.md")
 INPUT_BOX_MD  = read_asset("Textbox_input.md")
 OUTPUT_BOX_MD = read_asset("Textbox_output.md")
+CBE_CALCULATION_MD = read_asset("CBE_calc_text.md")
+REFS_CBE_MD = read_asset("references_CBE.md")
 
 IMAGE_LOGO    = "/assets/uhh-logo-web.jpg"   # served by Dash `/assets` route
 
@@ -1031,7 +1033,7 @@ def _update_xrf(formula):
 # 1️⃣  Charge-Balance mini-app                                                  
 # ────────────────────────────────────────────────────────────────────────────
 
-LABEL_WIDTH = "110px"   # fixed room for the ion label
+LABEL_WIDTH = "160px"   # fixed room for the ion label
 UNIT_WIDTH  = "60px"    # fixed room for the unit suffix
 
 def ion_row(label: str, ion_id: str, default: float, unit_suffix: str) -> dbc.Row:
@@ -1078,13 +1080,7 @@ def cb_layout() -> html.Div:
     intro = html.Div(
         [
             html.H2("Charge-Balance Calculator", className="fw-bold"),
-            html.P(
-                "The tool sums all cation charges (Mg²⁺, Ca²⁺, Na⁺, K⁺) and all anion "
-                "charges (Cl⁻, SO₄²⁻, NO₃⁻, plus Total Alkalinity). The **charge-balance "
-                "error (CBE %)** is the absolute difference between those two sums, "
-                "divided by their average, times 100. Values outside ±5 % are highlighted.",
-                className="text-muted",
-            ),
+            dcc.Markdown(CBE_CALCULATION_MD, mathjax=True),
         ],
         className="text-center mb-4",
         style={"maxWidth": "760px", "margin": "0 auto"},
@@ -1175,6 +1171,14 @@ def cb_layout() -> html.Div:
         style={"borderRadius": "1rem"},
     )
 
+    references = html.Div(
+        [
+            dcc.Markdown(REFS_CBE_MD, mathjax=True, style={"fontSize": "0.9rem"}),
+        ],
+        style={"maxWidth": "760px", "margin": "4rem auto 0"},
+        className="text-start",
+    )
+
     body = html.Div(
         dbc.Container(
             [
@@ -1190,6 +1194,7 @@ def cb_layout() -> html.Div:
                     ],
                     class_name="justify-content-center",
                 ),
+                references   # added to the app
             ],
             style={
                 "maxWidth": "1160px",
