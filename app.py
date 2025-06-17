@@ -1051,7 +1051,7 @@ def ion_row(label: str, ion_id: str, default: float, unit_suffix: str) -> dbc.Ro
                     dbc.Button("-", id=f"dec-{ion_id}", color="secondary", n_clicks=0),
                     dbc.Input(
                         id=ion_id,
-                        type="number",
+                        type="text",  #check if text type also works because of red outline issue
                         value=default,
                         step=0.5,
                         min=0,
