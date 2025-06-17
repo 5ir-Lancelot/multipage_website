@@ -1259,8 +1259,8 @@ def _update_balance(mg, ca, na, k, ta, cl, so4, no3, unit, density):
 
     # ── charge-balance error ────────────────────────────────────────
     cbe_total = cations_eq - anions_eq                 # error in charge eq
-    denom   = (cations_eq + anions_eq) / 2.0           #
-    cbe_rel = (cbe_total / denom * 100) if denom else 0.0   # relative error in %
+    denom   = (cations_eq + anions_eq)                 # sum of it
+    cbe_rel = (cbe_total / denom)*100 if denom else 0.0   # relative error in %
 
     # badge colour: red if outside ±5 %
     colour = "danger" if cbe_rel > 5 else "success"

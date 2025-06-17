@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="changed default values for seawater and changed alkalinity unit">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-    </list>
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="corrected Alkalinity name and unit in the table" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -171,7 +168,7 @@
       <workItem from="1745647590522" duration="11314000" />
       <workItem from="1746638076243" duration="41000" />
       <workItem from="1746694263178" duration="40000" />
-      <workItem from="1750149248694" duration="1669000" />
+      <workItem from="1750149248694" duration="2075000" />
     </task>
     <task id="LOCAL-00001" summary="make the app work">
       <option name="closed" value="true" />
@@ -373,7 +370,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750150701274</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="corrected Alkalinity name and unit in the table">
+      <option name="closed" value="true" />
+      <created>1750151311476</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1750151311476</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -406,7 +411,8 @@
     <MESSAGE value="edited README" />
     <MESSAGE value="text changes" />
     <MESSAGE value="changed default values for seawater and changed alkalinity unit" />
-    <option name="LAST_COMMIT_MESSAGE" value="changed default values for seawater and changed alkalinity unit" />
+    <MESSAGE value="corrected Alkalinity name and unit in the table" />
+    <option name="LAST_COMMIT_MESSAGE" value="corrected Alkalinity name and unit in the table" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1734089994757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
