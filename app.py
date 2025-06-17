@@ -44,7 +44,10 @@ app = Dash(
 app.title = "Modeling Tools for Geochemistry"
 
 # strip Dash's default footer
-app.index_string = """<!DOCTYPE html><html lang=\"en\"><head>{%metas%}<title>{%title%}</title>{%favicon%}{%css%}</head><body>{%app_entry%}{%config%}{%scripts%}{%renderer%}</body></html>"""
+#app.index_string = """<!DOCTYPE html><html lang=\"en\"><head>{%metas%}<title>{%title%}</title>{%favicon%}{%css%}</head><body>{%app_entry%}{%config%}{%scripts%}{%renderer%}</body></html>"""
+
+# new app index string fiyx by lukas without escape quotes
+app.index_string = """<!DOCTYPE html><html lang="en"><head>{%metas%}<title>{%title%}</title>{%favicon%}{%css%}</head><body>{%app_entry%}{%config%}{%scripts%}{%renderer%}</body></html>"""
 
 # ─────────────────────────────  PATHS & HELPERS  ─────────────────────────────
 BASE_DIR  = os.path.dirname(os.path.realpath(__file__))
@@ -1053,6 +1056,7 @@ def ion_row(label: str, ion_id: str, default: float, unit_suffix: str) -> dbc.Ro
                         step=0.5,
                         min=0,
                         max=2000,
+                        inputMode="decimal",   # try to fix decimal problem
                         style={"textAlign": "right", "width": "110px"},
                     ),
                     dbc.Button("+", id=f"inc-{ion_id}", color="secondary", n_clicks=0),
@@ -1223,8 +1227,11 @@ for _ion in ["cb-mg", "cb-ca", "cb-na", "cb-k", "cb-ta", "cb-cl", "cb-so4", "cb-
 
     @app.callback(Output(_ion, "value"), Input(inc_id, "n_clicks"), Input(dec_id, "n_clicks"), State(_ion, "value"), prevent_initial_call=True)
     def _stepper(inc, dec, value, _ion=_ion, inc_id=inc_id, dec_id=dec_id):
-        value = str(value).replace(",", ".") if value is not None else "0" # added for input error
-        value = float(value)  # added to avoid input errors
+        try:
+            value_str = str(value).strip().replace(",", ".") if value is not None else "0"
+            value = float(value_str)
+        except ValueError:
+            value = 0.0
         trigger = ctx.triggered_id
         if trigger == inc_id:
             value += 0.5
