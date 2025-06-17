@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="improved text of the CBE explanation">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="removed factor 2 from the equation" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -170,7 +168,7 @@
       <workItem from="1745647590522" duration="11314000" />
       <workItem from="1746638076243" duration="41000" />
       <workItem from="1746694263178" duration="40000" />
-      <workItem from="1750149248694" duration="10468000" />
+      <workItem from="1750149248694" duration="11113000" />
     </task>
     <task id="LOCAL-00001" summary="make the app work">
       <option name="closed" value="true" />
@@ -428,7 +426,15 @@
       <option name="project" value="LOCAL" />
       <updated>1750160968687</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="removed factor 2 from the equation">
+      <option name="closed" value="true" />
+      <created>1750165481955</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1750165481955</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -468,7 +474,8 @@
     <MESSAGE value="comma and point fix (more flexibility)" />
     <MESSAGE value="input type text (to avoid red outline data typüe check box)" />
     <MESSAGE value="improved text of the CBE explanation" />
-    <option name="LAST_COMMIT_MESSAGE" value="improved text of the CBE explanation" />
+    <MESSAGE value="removed factor 2 from the equation" />
+    <option name="LAST_COMMIT_MESSAGE" value="removed factor 2 from the equation" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1734089994757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
