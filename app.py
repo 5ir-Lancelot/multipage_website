@@ -687,10 +687,23 @@ app.layout = html.Div(
     },
 )
 
+# ───────────────────────────────  HOME PAGE  ────────────────────────────────
 
-# ───────────────────────────────  HOME PAGE ────────────────────────────────
+def _hero_card(title: str, desc: str, href: str) -> dbc.Card:
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.H5(title, className="card-title fw-semibold"),
+                html.P(desc, className="card-text"),
+                dbc.Button("Launch", href=href, color="light"),
+            ],
+            className="d-flex flex-column justify-content-between h-100",
+        ),
+        class_name="h-100 border-0 hvr-shadow",
+        style={"borderRadius": "1rem", "padding": "1.5rem", "maxWidth": "340px"},
+    )
+
 def home_layout() -> html.Div:
-    # Hero + cards in one section
     hero = html.Div(
         [
             html.H1(
@@ -698,70 +711,58 @@ def home_layout() -> html.Div:
                 className="display-3 fw-bold text-white",
             ),
             html.P(
-                "Interactive calculators for carbonate chemistry and XRF data—built for students, researchers, and practitioners.",
+                "Interactive calculators for carbonate chemistry, charge-balance checking, and mineral-oxide conversions.",
                 className="lead text-white mx-auto",
-                style={"maxWidth": "700px"},
+                style={"maxWidth": "760px"},
             ),
-            # cards row inside the hero
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5("Open Carbonate System Water Speciation", className="card-title fw-semibold"),
-                                    html.P(
-                                        "Compute open‑system carbonate speciation in fresh waters with both table and graph views.",
-                                        className="card-text",
-                                    ),
-                                    dbc.Button(
-                                        "Launch Alkalinity Tool",
-                                        color="light",
-                                        href="/carbonate-system-modeling",
-                                    ),
-                                ],
-                                className="d-flex flex-column justify-content-between h-100",
+            dbc.Container(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            _hero_card(
+                                "Open Carbonate System",
+                                "Compute open-system carbonate speciation in fresh waters with table & graph views.",
+                                "/carbonate-system-modeling",
                             ),
-                            className="h-100 border-0 hvr-shadow",
-                            style={"borderRadius": "1rem", "padding": "1.5rem"},
-                        ),
-                        md=6, lg=4,
+                            md=6,
+                            lg=4,
+                        class_name="mb-4",
                     ),
                     dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5("XRF data simulator", className="card-title fw-semibold"),
-                                    html.P(
-                                        "This tool calculates theoretical oxide weight percentages from a mineral’s plain chemical formula. By parsing the formula, it derives the idealized composition of the pure mineral,"
-                                        " including contributions from common oxides. The results are useful for XRF normalization, geochemical modeling, and educational purposes.",
-                                        className="card-text",
-                                    ),
-                                    dbc.Button(
-                                        "Launch XRF Tool",
-                                        color="light",
-                                        href="/xrf",
-                                    ),                                ],
-                                className="d-flex flex-column justify-content-between h-100",
-                            ),
-                            className="h-100 border-0 hvr-shadow",
-                            style={"borderRadius": "1rem", "padding": "1.5rem"},
+                        _hero_card(
+                            "Charge Balance",
+                            "Check major-ion analyses for electrical neutrality and flag errors over ±5 %.",
+                            "/charge-balance",
                         ),
-                        md=6, lg=4,
+                        md=6,
+                        lg=4,
+                        class_name="mb-4",
+                    ),
+                    dbc.Col(
+                        _hero_card(
+                            "XRF Oxide Simulator",
+                            "Convert any mineral formula into theoretical oxide weight fractions.",
+                            "/xrf",
+                        ),
+                        md=6,
+                        lg=4,
+                        class_name="mb-4",
                     ),
                 ],
-                className="g-4 justify-content-center mt-4",
+                class_name="g-4 justify-content-center mt-4",
+                ),
             ),
         ],
         className="text-center py-5 px-3",
-        style={"backgroundColor": "#149c7d"},
+        style={
+            "background": "linear-gradient(135deg,#149c7d 0%,#0d7359 100%)"
+        },
     )
 
     return html.Div(
         [
             SiteHeader("Startseite"),
             hero,
-            # push footer down
             html.Div(style={"flex": "1 0 auto"}),
             Footer(),
         ],
@@ -772,6 +773,7 @@ def home_layout() -> html.Div:
             "margin": "0",
         },
     )
+
 
 # ────────────────  X R F   mini-app  (new)  ────────────────
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1025,6 +1027,246 @@ def _update_xrf(formula):
 
     return make_table2(pd.DataFrame(rows), id="xrf-dt")
 
+# ────────────────────────────────────────────────────────────────────────────
+# 1️⃣  Charge-Balance mini-app                                                  
+# ────────────────────────────────────────────────────────────────────────────
+
+LABEL_WIDTH = "110px"   # fixed room for the ion label
+UNIT_WIDTH  = "60px"    # fixed room for the unit suffix
+
+def ion_row(label: str, ion_id: str, default: float, unit_suffix: str) -> dbc.Row:
+    return dbc.Row(
+        dbc.Col(
+            dbc.InputGroup(
+                [
+                    dbc.InputGroupText(
+                        label,
+                        style={"width": LABEL_WIDTH, "justifyContent": "right"},
+                    ),
+                    dbc.Button("-", id=f"dec-{ion_id}", color="secondary", n_clicks=0),
+                    dbc.Input(
+                        id=ion_id,
+                        type="number",
+                        value=default,
+                        step=0.5,
+                        min=0,
+                        max=2000,
+                        style={"textAlign": "right", "width": "110px"},
+                    ),
+                    dbc.Button("+", id=f"inc-{ion_id}", color="secondary", n_clicks=0),
+                    dbc.InputGroupText(
+                        unit_suffix,
+                        style={"width": UNIT_WIDTH, "justifyContent": "center"},
+                    ),
+                ],
+                class_name="w-100 flex-nowrap",
+            ),
+            md=12,
+        ),
+        class_name="my-2",
+    )
+
+# ───────── main layout ─────────
+
+def cb_layout() -> html.Div:
+    header = SiteHeader(
+        "Charge Balance Calculator",
+        [("Home", "/"), ("Charge Balance", "/charge-balance")],
+    )
+
+    # ── Intro (concise) ───────────────────────────────────────────────
+    intro = html.Div(
+        [
+            html.H2("Charge-Balance Calculator", className="fw-bold"),
+            html.P(
+                "The tool sums all cation charges (Mg²⁺, Ca²⁺, Na⁺, K⁺) and all anion "
+                "charges (Cl⁻, SO₄²⁻, NO₃⁻, plus Total Alkalinity). The **charge-balance "
+                "error (CBE %)** is the absolute difference between those two sums, "
+                "divided by their average, times 100. Values outside ±5 % are highlighted.",
+                className="text-muted",
+            ),
+        ],
+        className="text-center mb-4",
+        style={"maxWidth": "760px", "margin": "0 auto"},
+    )
+
+    # ────────────────────────────────────────────────────────────────
+
+    # neat button-style radio switch  ─────────────────────────────────────────
+    unit_radio = dbc.RadioItems(
+        id="cb-unit",
+        options=[
+            {"label": "mmol / kg", "value": "mmol/kg"},
+            {"label": "mmol / L",  "value": "mmol/L"},
+        ],
+        value="mmol/kg",
+        inline=True,
+        # make each option look like a Bootstrap button
+        inputClassName="btn-check",
+        labelClassName="btn btn-outline-secondary",
+        labelCheckedClassName="btn btn-secondary active",
+        # keep both buttons in one rounded pill
+        class_name="btn-group",
+        style={"borderRadius": "0.5rem"},
+    )
+
+    density_grp = dbc.InputGroup([
+        dbc.InputGroupText("Density"),
+        dbc.Input(id="cb-density", type="number", value=1.025, step=0.001, min=0.8, max=1.3),
+        dbc.InputGroupText("kg · L⁻¹"),
+    ], class_name="w-100")
+
+    inputs_card = dbc.Card(
+        dbc.CardBody([
+            html.H5("Measurement units", className="fw-semibold"), unit_radio,
+            html.Div(id="cb-density-div", children=density_grp, className="mt-2"),
+            html.P("Enter major-ion concentrations and tweak with ± buttons. The calculator recomputes instantly.",
+                   className="text-muted small mt-2"),
+            html.Hr(),
+            html.H5("Cations", className="fw-semibold mt-2"),
+            ion_row("Mg²⁺", "cb-mg", 53, "mmol"),
+            ion_row("Ca²⁺", "cb-ca", 10.3, "mmol"),
+            ion_row("Na⁺",  "cb-na", 468, "mmol"),
+            ion_row("K⁺",   "cb-k",  10,  "mmol"),
+            html.H5("Anions", className="fw-semibold mt-4"),
+            ion_row("Total Alk (eq)", "cb-ta", 2.3, "eq"),
+            ion_row("Cl⁻",  "cb-cl", 545, "mmol"),
+            ion_row("SO₄²⁻","cb-so4", 28.2, "mmol"),
+            ion_row("NO₃⁻", "cb-no3", 0,   "mmol"),
+        ]),
+        class_name="shadow-sm h-100",
+        style={"borderRadius": "1rem"},
+    )
+
+    # tiny result DataTable
+    res_table = dash_table.DataTable(
+        id="cb-table",
+        data=[{"Metric": "Absolute CBE (eq)", "Value": 0.0}, {"Metric": "Relative CBE (%)", "Value": 0.0}],
+        columns=[{"name": c, "id": c} for c in ["Metric", "Value"]],
+        style_cell={"padding": "4px 8px", "textAlign": "right"},
+        style_header={"display": "none"},
+        style_data_conditional=[
+            {"if": {"filter_query": "{Metric} = 'Relative CBE (%)' && {Value} > 5"},
+             "backgroundColor": "tomato", "color": "white"},
+        ],
+    )
+
+    # ── Results card (clean badges instead of a tiny table) ──────────────────────
+    results_card = dbc.Card(
+        dbc.CardBody(
+            [
+                html.H5("Results", className="fw-semibold"),
+                html.Div(
+                    [
+                        html.Span("Absolute CBE (eq): "),
+                        html.Span(id="cb-abs", className="fw-bold text-primary"),
+                    ],
+                    className="mb-3",
+                ),
+                html.Div(
+                    [
+                        html.Span("Relative CBE (%): "),
+                        dbc.Badge(id="cb-rel", pill=True, className="fs-5"),
+                    ],
+                ),
+            ]
+        ),
+        class_name="shadow-sm h-100",
+        style={"borderRadius": "1rem"},
+    )
+
+    body = html.Div(
+        dbc.Container(
+            [
+                intro,  # ← inserted just before the two-column layout
+                dbc.Row(
+                    [
+                        dbc.Col(inputs_card, lg=6),
+                        dbc.Col(
+                            results_card,
+                            lg=4,
+                            class_name="mt-4 mt-lg-0",
+                        ),
+                    ],
+                    class_name="justify-content-center",
+                ),
+            ],
+            style={
+                "maxWidth": "1160px",
+                "paddingTop": "3rem",   # a touch more breathing space
+                "paddingBottom": "4rem",
+            },
+        ),
+        style={"flex": "1 0 auto"},
+    )
+
+    return html.Div(
+        [header, body, Footer()],
+        style={
+            "display": "flex",
+            "flexDirection": "column",
+            "minHeight": "100vh",
+        },
+    )
+# ───────── callbacks ─────────
+@app.callback(Output("cb-density-div", "style"), Input("cb-unit", "value"))
+def _toggle_density(unit):
+    return {} if unit == "mmol/L" else {"display": "none"}
+
+for _ion in ["cb-mg", "cb-ca", "cb-na", "cb-k", "cb-ta", "cb-cl", "cb-so4", "cb-no3"]:
+    inc_id, dec_id = f"inc-{_ion}", f"dec-{_ion}"
+
+    @app.callback(Output(_ion, "value"), Input(inc_id, "n_clicks"), Input(dec_id, "n_clicks"), State(_ion, "value"), prevent_initial_call=True)
+    def _stepper(inc, dec, value, _ion=_ion, inc_id=inc_id, dec_id=dec_id):
+        value = value or 0
+        trigger = ctx.triggered_id
+        if trigger == inc_id:
+            value += 0.5
+        elif trigger == dec_id:
+            value = max(0, value - 0.5)
+        return round(value, 2)
+
+@app.callback(
+    Output("cb-abs", "children"),
+    Output("cb-rel", "children"),
+    Output("cb-rel", "color"),
+    [
+        Input("cb-mg", "value"), Input("cb-ca", "value"),
+        Input("cb-na", "value"), Input("cb-k", "value"),
+        Input("cb-ta", "value"), Input("cb-cl", "value"),
+        Input("cb-so4", "value"), Input("cb-no3", "value"),
+        Input("cb-unit", "value"), Input("cb-density", "value"),
+    ],
+)
+def _update_balance(mg, ca, na, k, ta, cl, so4, no3, unit, density):
+    """Compute absolute and relative charge-balance error (CBE)."""
+
+    # ── sanity checks ───────────────────────────────────────────────
+    if None in (mg, ca, na, k, ta, cl, so4, no3) or (
+        unit == "mmol/L" and density is None
+    ):
+        raise PreventUpdate
+
+    # convert everything to mmol · kg⁻¹  (if user chose mmol · L⁻¹)
+    factor = 1.0 / float(density) if unit == "mmol/L" else 1.0
+    mg, ca, na, k, ta, cl, so4, no3 = [
+        float(x) * factor for x in (mg, ca, na, k, ta, cl, so4, no3)
+    ]
+
+    # ── equivalents of charge (mol · kg⁻¹) ──────────────────────────
+    cations_eq = (mg * 2 + ca * 2 + na + k) / 1000.0
+    anions_eq  = (cl + so4 * 2 + no3) / 1000.0 + ta  # TA is already in eq
+
+    # ── charge-balance error ────────────────────────────────────────
+    cbe_abs = abs(cations_eq - anions_eq)                 # in eq
+    denom   = (cations_eq + anions_eq) / 2.0
+    cbe_rel = (cbe_abs / denom * 100) if denom else 0.0   # in %
+
+    # badge colour: red if outside ±5 %
+    colour = "danger" if cbe_rel > 5 else "success"
+
+    return f"{cbe_abs:.4f}", f"{cbe_rel:.2f} %", colour
+
 
 # ────────────────────────  PAGE ROUTING CALLBACK ─────────────────────────
 @app.callback(Output("page-layout", "children"), Input("url", "pathname"))
@@ -1034,7 +1276,9 @@ def display_page(pathname: str):
     if pathname == "/carbonate-system-modeling":
         return calc_layout()
     if pathname == "/xrf":
-        return xrf_layout() 
+        return xrf_layout()
+    if pathname == "/charge-balance":
+        return cb_layout()
     if pathname == "/impressum":
         return legal_layout(IMPRESSUM_MD, "Impressum", pathname)
     if pathname == "/datenschutz":
