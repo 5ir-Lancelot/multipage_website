@@ -66,6 +66,10 @@ OUTPUT_BOX_MD = read_asset("Textbox_output.md")
 CBE_CALCULATION_MD = read_asset("CBE_calc_text.md")
 REFS_CBE_MD = read_asset("references_CBE.md")
 
+# for new apps
+
+
+
 IMAGE_LOGO    = "/assets/uhh-logo-web.jpg"   # served by Dash `/assets` route
 
 # ─────────────────────────────  SHARED UI COMPONENTS  ───────────────────────
@@ -1064,12 +1068,9 @@ df_mineral = pd.read_excel('assets/mineral_lifetimes_lasaga_1994.xlsx')
 df_mineral['MolarVolume_m3'] = df_mineral['Mol. vol. (cm³/mol)'] * 1e-6
 df_mineral['Rate'] = 10 ** df_mineral['Log rate (mol/m²/s)']
 
-with open("assets/equations_lasaga.md", "r", encoding="utf-8") as f:
-    equations_md = f.read()
 
-with open("assets/references_lasaga.md", "r", encoding="utf-8") as f:
-    references_md = f.read()
-
+equations_md = read_asset("equations_lasaga.md")
+references_md = read_asset("references_lasaga.md")
 
 def mineral_layout():
     return html.Div(
@@ -1368,6 +1369,30 @@ def forsterite_dissolution_layout():
             "minHeight": "100vh",
         },
     )
+
+
+# Placeholder callback
+@app.callback(
+    Output('forsterite-dissolution-plot', 'figure'),
+    Input('ph-slider', 'value'),
+    Input('temp-slider', 'value'),
+    Input('radius-slider', 'value'),
+)
+def update_forsterite_plot(pH, temp, radius):
+    # Placeholder 1:1 plot with annotations for input values
+    x = [0, 1, 2, 3, 4, 5]
+    y = x  # Simple 1:1 line
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=y, mode='lines+markers', name='1:1 line'))
+
+    fig.update_layout(
+        title=f"Placeholder Plot — pH: {pH}, Temp: {temp}°C, Radius: {radius} µm",
+        xaxis_title="x",
+        yaxis_title="y",
+        template="plotly_white",
+    )
+    return fig
 
 
 # ────────────────────────────────────────────────────────────────────────────
