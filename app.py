@@ -753,7 +753,27 @@ def home_layout() -> html.Div:
                         lg=4,
                         class_name="mb-4",
                     ),
-                ],
+                    dbc.Col(
+                        _hero_card(
+                            "Mineral Dissolution Simulation",
+                            "Lifetime of a spherical crystal in water at pH=5 T=25°C",
+                            "/mineral-dissolution",
+                        ),
+                        md=6,
+                        lg=4,
+                        class_name="mb-4",
+                    ),
+                    dbc.Col(
+                        _hero_card(
+                            "Forsterite Dissolution f(pH, T, size)",
+                            "Coming soon",
+                            "/forsterite-dissolution",
+                        ),
+                        md=6,
+                        lg=4,
+                        class_name="mb-4",
+                    ),
+                    ],
                 class_name="g-4 justify-content-center mt-4",
                 ),
             ),
@@ -1032,6 +1052,324 @@ def _update_xrf(formula):
 
     return make_table2(pd.DataFrame(rows), id="xrf-dt")
 
+
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# 1️⃣  Mineral Crystal Sphere dissolution app
+# ────────────────────────────────────────────────────────────────────────────
+
+# Load data
+df_mineral = pd.read_excel('assets/mineral_lifetimes_lasaga_1994.xlsx')
+df_mineral['MolarVolume_m3'] = df_mineral['Mol. vol. (cm³/mol)'] * 1e-6
+df_mineral['Rate'] = 10 ** df_mineral['Log rate (mol/m²/s)']
+
+with open("assets/equations_lasaga.md", "r", encoding="utf-8") as f:
+    equations_md = f.read()
+
+with open("assets/references_lasaga.md", "r", encoding="utf-8") as f:
+    references_md = f.read()
+
+
+def mineral_layout():
+    return html.Div(
+        [
+            html.Div(  # centered content container
+                [
+                    SiteHeader(
+                        "Mineral Dissolution",
+                        [("Home", "/"), ("Mineral Dissolution", "/mineral-dissolution")],
+                    ),
+
+                    html.H1("Mineral Dissolution Model (rates for pH=5 T=25°C)"),
+                    dcc.Markdown(equations_md, mathjax=True),
+
+                    html.Label(
+                        "Select mineral:",
+                        style={
+                            "fontSize": "20px",
+                            "fontWeight": "bold",
+                            "color": "#1a73e8",
+                            "backgroundColor": "#e8f0fe",
+                            "padding": "5px 10px",
+                            "borderRadius": "5px",
+                            "display": "inline-block",
+                            "marginBottom": "10px"
+                        }
+                    ),
+                    dcc.Dropdown(
+                        id='mineral-dropdown',
+                        options=[{'label': m, 'value': m} for m in df_mineral['Mineral']],
+                        value=df_mineral['Mineral'].iloc[11]
+                    ),
+
+                    html.Div(
+                        [
+                            html.Label(
+                                "Initial crystal radius (µm):",
+                                style={
+                                    "fontSize": "20px",
+                                    "fontWeight": "bold",
+                                    "color": "#1a73e8",
+                                    "backgroundColor": "#e8f0fe",
+                                    "padding": "5px 10px",
+                                    "borderRadius": "5px",
+                                    "display": "inline-block",
+                                    "marginTop": "20px",  # whitespace above
+                                    "marginBottom": "10px",  # whitespace below
+                                }
+                            ),
+                            dcc.Slider(
+                                id='radius-slider',
+                                min=1, max=1000, step=10, value=100,
+                                marks={i: f"{i} µm" for i in [1, 50, 100, 250, 500, 750, 1000]},
+                                tooltip={"placement": "bottom", "always_visible": False},
+                                updatemode='drag',
+                                vertical=False,
+                                # add margin around the slider for whitespace
+                                className="my-3"  # or use style={"marginTop": "10px", "marginBottom": "20px"}
+                            )
+                        ],
+                        style={"width": "90%", "maxWidth": "600px"}
+                    ),
+
+
+                    dcc.Graph(id='dissolution-plot'),
+
+                    html.Hr(),
+                    html.H2("References"),
+                    dcc.Markdown(references_md),
+                ],
+                style={
+                    "maxWidth": "1000px",
+                    "margin": "0 auto",
+                    "padding": "20px"
+                },
+            ),
+
+            # Footer outside the centered div to span full width
+            Footer(),
+        ],
+        style={
+            "display": "flex",
+            "flexDirection": "column",
+            "minHeight": "100vh",
+        },
+    )
+
+
+@app.callback(
+    Output('dissolution-plot', 'figure'),
+    [Input('mineral-dropdown', 'value'), Input('radius-slider', 'value')]
+)
+
+def update_plot(selected_mineral, radius_um):
+    # Extract values
+    row = df_mineral[df_mineral['Mineral'] == selected_mineral].iloc[0]
+    R = row['Rate']
+    Vm = row['MolarVolume_m3']
+    r0 = radius_um * 1e-6  # µm to m
+
+    # Time to full dissolution
+    t_dissolve = r0 / (R * Vm)
+
+    # Time array
+    time = np.linspace(0, t_dissolve, 1000)
+    r_t = r0 - R * Vm * time
+    V_t = (4/3) * np.pi * np.clip(r_t, 0, None)**3
+    n_t = V_t / Vm
+
+    # Convert time to years
+    time_years = time / (3600 * 24 * 365.25)
+
+    # Plotly with multiple y-axes
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=time_years, y=V_t,
+        name='Volume (m³)',
+        yaxis='y',
+        line=dict(color='blue')
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=time_years, y=r_t * 1e6,
+        name='Radius (µm)',
+        yaxis='y2',
+        line=dict(color='green')
+    ))
+
+    # Add annotation for full dissolution time
+    fig.add_annotation(
+        text=f"Full dissolution time: {t_dissolve / (3600 * 24 * 365.25):.2f} years",
+        xref="paper", yref="paper",
+        x=0.05, y=0.05,  # bottom-left corner
+        showarrow=False,
+        font=dict(size=20, color="gray"),
+        align="left",
+        bordercolor="lightgray",
+        borderwidth=1,
+        borderpad=4,
+        bgcolor="white",
+        opacity=1
+    )
+
+
+    fig.update_layout(
+        title=f"Dissolution of {selected_mineral} crystal r<sub>0</sub> ={radius_um} µm",
+        xaxis=dict(title='Time (years)'),
+
+        yaxis=dict(
+            title=dict(text='Volume (m³)', font=dict(color='blue')),
+            tickfont=dict(color='blue')
+        ),
+        yaxis2=dict(
+            title=dict(text='Radius (µm)', font=dict(color='green')),
+            overlaying='y',
+            side='right',
+            tickfont=dict(color='green')
+        ),
+
+
+        legend=dict(x=0.7, y=0.99),
+        template='simple_white'
+    )
+
+
+
+    return fig
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# 1️⃣  Forsterite Dissolution app
+# ────────────────────────────────────────────────────────────────────────────
+
+with open("assets/references_forsterite.md", "r", encoding="utf-8") as f:
+    references_forsterite = f.read()
+
+with open("assets/text_forsterite.md", "r", encoding="utf-8") as f:
+    text_forsterite = f.read()
+
+def forsterite_dissolution_layout():
+    return html.Div(
+        [
+            html.Div(  # centered content container
+                [
+                    SiteHeader(
+                        "Forsterite Dissolution f(pH, T, r)",
+                        [("Home", "/"), ("Forsterite Dissolution", "/forsterite-dissolution")],
+                    ),
+
+                    html.H1("Forsterite Dissolution Model"),
+
+                    dcc.Markdown(text_forsterite,
+                        mathjax=True
+                    ),
+
+                    # pH slider label and slider
+                    html.Label(
+                        "pH:",
+                        style={
+                            "fontSize": "20px",
+                            "fontWeight": "bold",
+                            "color": "#1a73e8",
+                            "backgroundColor": "#e8f0fe",
+                            "padding": "5px 10px",
+                            "borderRadius": "5px",
+                            "display": "inline-block",
+                            "marginTop": "20px",
+                            "marginBottom": "10px",
+                        }
+                    ),
+                    dcc.Slider(
+                        id='ph-slider',
+                        min=0,
+                        max=14,
+                        step=0.1,
+                        value=5,
+                        marks={i: str(i) for i in range(0, 15)},
+                        tooltip={"placement": "bottom", "always_visible": False},
+                        updatemode='drag',
+                        className="my-3",
+                    ),
+
+                    # Temperature slider label and slider
+                    html.Label(
+                        "Temperature (°C):",
+                        style={
+                            "fontSize": "20px",
+                            "fontWeight": "bold",
+                            "color": "#1a73e8",
+                            "backgroundColor": "#e8f0fe",
+                            "padding": "5px 10px",
+                            "borderRadius": "5px",
+                            "display": "inline-block",
+                            "marginTop": "20px",
+                            "marginBottom": "10px",
+                        }
+                    ),
+                    dcc.Slider(
+                        id='temp-slider',
+                        min=0,
+                        max=150,
+                        step=1,
+                        value=25,
+                        marks={i: str(i) for i in range(0, 151, 20)},
+                        tooltip={"placement": "bottom", "always_visible": False},
+                        updatemode='drag',
+                        className="my-3",
+                    ),
+
+                    # Crystal size slider (like before)
+                    html.Label(
+                        "Initial crystal radius (µm):",
+                        style={
+                            "fontSize": "20px",
+                            "fontWeight": "bold",
+                            "color": "#1a73e8",
+                            "backgroundColor": "#e8f0fe",
+                            "padding": "5px 10px",
+                            "borderRadius": "5px",
+                            "display": "inline-block",
+                            "marginTop": "20px",
+                            "marginBottom": "10px",
+                        }
+                    ),
+                    dcc.Slider(
+                        id='radius-slider',
+                        min=1,
+                        max=1000,
+                        step=10,
+                        value=100,
+                        marks={i: f"{i} µm" for i in [1, 50, 100, 250, 500, 750, 1000]},
+                        tooltip={"placement": "bottom", "always_visible": False},
+                        updatemode='drag',
+                        className="my-3",
+                    ),
+
+                    dcc.Graph(id='forsterite-dissolution-plot'),
+
+                    html.Hr(),
+                    html.H2("References"),
+                    dcc.Markdown(references_forsterite),
+                ],
+                style={
+                    "maxWidth": "1000px",
+                    "margin": "0 auto",
+                    "padding": "20px"
+                },
+            ),
+
+            Footer(),  # full width footer outside centered container
+        ],
+        style={
+            "display": "flex",
+            "flexDirection": "column",
+            "minHeight": "100vh",
+        },
+    )
+
+
 # ────────────────────────────────────────────────────────────────────────────
 # 1️⃣  Charge-Balance mini-app                                                  
 # ────────────────────────────────────────────────────────────────────────────
@@ -1290,6 +1628,10 @@ def display_page(pathname: str):
         return calc_layout()
     if pathname == "/xrf":
         return xrf_layout()
+    if pathname == "/mineral-dissolution":
+        return mineral_layout()
+    if pathname == "/forsterite-dissolution":
+        return forsterite_dissolution_layout()
     if pathname == "/charge-balance":
         return cb_layout()
     if pathname == "/impressum":
