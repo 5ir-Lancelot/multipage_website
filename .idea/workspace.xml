@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="two new apps implemented to the webpage + one more requirement">
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="requirements back to old">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -173,7 +173,7 @@
       <workItem from="1746694263178" duration="40000" />
       <workItem from="1750149248694" duration="14431000" />
       <workItem from="1750267070045" duration="21000" />
-      <workItem from="1754583343319" duration="6010000" />
+      <workItem from="1754583343319" duration="6656000" />
     </task>
     <task id="LOCAL-00001" summary="make the app work">
       <option name="closed" value="true" />
@@ -479,7 +479,31 @@
       <option name="project" value="LOCAL" />
       <updated>1754588903225</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="fixed requirements">
+      <option name="closed" value="true" />
+      <created>1754589468221</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1754589468221</updated>
+    </task>
+    <task id="LOCAL-00040" summary="fixed requirements">
+      <option name="closed" value="true" />
+      <created>1754589673225</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1754589673225</updated>
+    </task>
+    <task id="LOCAL-00041" summary="requirements back to old">
+      <option name="closed" value="true" />
+      <created>1754589734413</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1754589734413</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -497,8 +521,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="last update from lukas for today" />
-    <MESSAGE value="some README update" />
     <MESSAGE value="updated the .html files with datenschutz etc" />
     <MESSAGE value="updated the README" />
     <MESSAGE value="updated the plot size and oder" />
@@ -522,7 +544,9 @@
     <MESSAGE value="changed abs" />
     <MESSAGE value="changed text" />
     <MESSAGE value="two new apps implemented to the webpage + one more requirement" />
-    <option name="LAST_COMMIT_MESSAGE" value="two new apps implemented to the webpage + one more requirement" />
+    <MESSAGE value="fixed requirements" />
+    <MESSAGE value="requirements back to old" />
+    <option name="LAST_COMMIT_MESSAGE" value="requirements back to old" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1734089994757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
