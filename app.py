@@ -1244,12 +1244,9 @@ def update_plot(selected_mineral, radius_um):
 # ────────────────────────────────────────────────────────────────────────────
 # 1️⃣  Forsterite Dissolution app
 # ────────────────────────────────────────────────────────────────────────────
+text_forsterite = read_asset("text_forsterite.md")
+references_forsterite = read_asset("references_forsterite.md")
 
-with open("assets/references_forsterite.md", "r", encoding="utf-8") as f:
-    references_forsterite = f.read()
-
-with open("assets/text_forsterite.md", "r", encoding="utf-8") as f:
-    text_forsterite = f.read()
 
 def forsterite_dissolution_layout():
     return html.Div(
