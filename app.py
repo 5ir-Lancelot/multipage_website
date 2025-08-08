@@ -769,7 +769,11 @@ def home_layout() -> html.Div:
                     ),
                     dbc.Col(
                         _hero_card(
-                            "Forsterite Dissolution f(pH, T, size)",
+                            [
+                                "Forsterite Dissolution",
+                                html.Br(),
+                                "f(pH, T, size)"
+                            ],
                             "Forsterite dissolution model dependent on pH, temperature, and crystal radius.",
                             "/forsterite-dissolution",
                         ),
