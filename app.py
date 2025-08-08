@@ -71,6 +71,7 @@ REFS_CBE_MD = read_asset("references_CBE.md")
 
 
 IMAGE_LOGO    = "/assets/uhh-logo-web.jpg"   # served by Dash `/assets` route
+BACKGROUND_IMAGE = "/assets/background_image.jpg"   # served by Dash `/assets` route
 
 # ─────────────────────────────  SHARED UI COMPONENTS  ───────────────────────
 
@@ -788,7 +789,11 @@ def home_layout() -> html.Div:
         ],
         className="text-center py-5 px-3",
         style={
-            "background": "linear-gradient(135deg,#149c7d 0%,#0d7359 100%)"
+            "backgroundImage": "url('/assets/background_image.jpg')",
+            "backgroundSize": "cover",
+            "backgroundPosition": "center",
+            "backgroundRepeat": "no-repeat",
+            #"background": "linear-gradient(135deg,#149c7d 0%,#0d7359 100%)"
         },
     )
 
