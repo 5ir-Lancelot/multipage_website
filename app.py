@@ -1064,7 +1064,14 @@ def _update_xrf(formula):
 # ────────────────────────────────────────────────────────────────────────────
 
 # Load data
-df_mineral = pd.read_excel('assets/mineral_lifetimes_lasaga_1994.xlsx',engine='openpyxl')
+
+#fix the data load
+df_mineral = pd.read_excel(
+    os.path.join(filepath, 'assets/mineral_lifetimes_lasaga_1994.xlsx'),
+    engine='openpyxl')
+
+
+#df_mineral = pd.read_excel(,engine='openpyxl')
 df_mineral['MolarVolume_m3'] = df_mineral['Mol. vol. (cm³/mol)'] * 1e-6
 df_mineral['Rate'] = 10 ** df_mineral['Log rate (mol/m²/s)']
 
