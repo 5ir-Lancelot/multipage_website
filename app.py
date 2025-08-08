@@ -1464,7 +1464,7 @@ def update_forsterite_plot(pH, temp, radius):
     )
 
     fig.update_layout(
-        title=f" Dissolution of Forsterite crystal pH: {pH}, Temp: {temp}°C, Radius: {radius} µm",
+        title=f" Dissolution of Forsterite crystal pH: {pH}, Temp: {temp}°C, Radius: {radius} µm<br>resulting log dissolution rate: {log_rate:.3f} log10(mol/m²/s)",
         xaxis=dict(title='Time (years)'),
 
         yaxis=dict(

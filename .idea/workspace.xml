@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="Updated README.md file">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="implemented forsterite app">
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/references_forsterite.md" beforeDir="false" afterPath="$PROJECT_DIR$/assets/references_forsterite.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/text_forsterite.md" beforeDir="false" afterPath="$PROJECT_DIR$/assets/text_forsterite.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +174,7 @@
       <workItem from="1750149248694" duration="14431000" />
       <workItem from="1750267070045" duration="21000" />
       <workItem from="1754583343319" duration="7723000" />
-      <workItem from="1754646221001" duration="3518000" />
+      <workItem from="1754646221001" duration="3821000" />
     </task>
     <task id="LOCAL-00001" summary="make the app work">
       <option name="closed" value="true" />
@@ -555,7 +552,15 @@
       <option name="project" value="LOCAL" />
       <updated>1754648132782</updated>
     </task>
-    <option name="localTasksCounter" value="48" />
+    <task id="LOCAL-00048" summary="implemented forsterite app">
+      <option name="closed" value="true" />
+      <created>1754649906661</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1754649906661</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -573,7 +578,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="made website more safe (dont allow comma in input and say error otherwise)" />
     <MESSAGE value="changes home layout texts" />
     <MESSAGE value="edited README" />
     <MESSAGE value="text changes" />
@@ -598,7 +602,8 @@
     <MESSAGE value="add engine to the load mineral" />
     <MESSAGE value="fixed loading data from correct filepath" />
     <MESSAGE value="Updated README.md file" />
-    <option name="LAST_COMMIT_MESSAGE" value="Updated README.md file" />
+    <MESSAGE value="implemented forsterite app" />
+    <option name="LAST_COMMIT_MESSAGE" value="implemented forsterite app" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1734089994757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
