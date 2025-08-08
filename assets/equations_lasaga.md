@@ -1,5 +1,3 @@
-## Analytical Derivation of Spherical Crystal Dissolution (Surface-Controlled, Constant Rate)
-
 We assume:
 - A spherical particle of initial radius $r_0$
 - A constant dissolution rate $R$ in mol·m$^{-2}$·s$^{-1}$

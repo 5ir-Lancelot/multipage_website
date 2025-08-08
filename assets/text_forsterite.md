@@ -1,4 +1,7 @@
-## Analytical Derivation of Spherical Crystal Dissolution (Surface-Controlled, Constant Rate)
+The functional relationship describing how forsterite dissolves as a function of pH and temperature is taken from \[1\].
+
+The equations describing the dissolution process are taken from \[2\].
+
 
 We assume:
 - A spherical particle of initial radius $r_0$

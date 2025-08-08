@@ -770,7 +770,7 @@ def home_layout() -> html.Div:
                     dbc.Col(
                         _hero_card(
                             "Forsterite Dissolution f(pH, T, size)",
-                            "Coming soon",
+                            "Forsterite dissolution model dependent on pH, temperature, and crystal radius.",
                             "/forsterite-dissolution",
                         ),
                         md=6,
@@ -1381,19 +1381,108 @@ def forsterite_dissolution_layout():
     Input('radius-slider', 'value'),
 )
 def update_forsterite_plot(pH, temp, radius):
-    # Placeholder 1:1 plot with annotations for input values
-    x = [0, 1, 2, 3, 4, 5]
-    y = x  # Simple 1:1 line
 
+    # dissolution rates for different pH range
+    def rate_low_pH(pH, T_C):
+        """
+        Calculate log10 of forsterite dissolution rate for pH < 5.6
+        T_C: temperature in Celsius
+        Returns log10(rate in mol/m²/s)
+        """
+        T_K = T_C + 273.15  # Convert to Kelvin
+        log_rgeo = 6.05 - 0.46 * pH - (3683.0 / T_K)
+        return log_rgeo
+
+    def rate_high_pH(pH, T_C):
+        """
+        Calculate log10 of forsterite dissolution rate for pH > 5.6
+        T_C: temperature in Celsius
+        Returns log10(rate in mol/m²/s)
+        """
+        T_K = T_C + 273.15
+        log_rgeo = 4.07 - 0.256 * pH - (3465.0 / T_K)
+        return log_rgeo
+
+    def rate_forsterite(pH, T_C):
+        """
+        Determine which equation to use based on pH.
+        Returns log10(rate in mol/m²/s)
+        """
+        if pH <= 5.6:
+            return rate_low_pH(pH, T_C)
+        else:
+            return rate_high_pH(pH, T_C)
+
+    # Extract values
+    log_rate = rate_forsterite(pH, temp)
+    R = 10 ** log_rate  # Convert to mol/m²/s
+    Vm = 43.79 * 1e-6
+    r0 = radius * 1e-6  # µm to m
+
+    # Time to full dissolution
+    t_dissolve = r0 / (R * Vm)
+
+    # Time array
+    time = np.linspace(0, t_dissolve, 1000)
+    r_t = r0 - R * Vm * time
+    V_t = (4 / 3) * np.pi * np.clip(r_t, 0, None) ** 3
+    n_t = V_t / Vm
+
+    # Convert time to years
+    time_years = time / (3600 * 24 * 365.25)
+
+    # Plotly with multiple y-axes
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=y, mode='lines+markers', name='1:1 line'))
+
+    fig.add_trace(go.Scatter(
+        x=time_years, y=V_t,
+        name='Volume (m³)',
+        yaxis='y',
+        line=dict(color='blue')
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=time_years, y=r_t * 1e6,
+        name='Radius (µm)',
+        yaxis='y2',
+        line=dict(color='green')
+    ))
+
+    # Add annotation for full dissolution time
+    fig.add_annotation(
+        text=f"Full dissolution time: {t_dissolve / (3600 * 24 * 365.25):.2f} years",
+        xref="paper", yref="paper",
+        x=0.05, y=0.05,  # bottom-left corner
+        showarrow=False,
+        font=dict(size=20, color="gray"),
+        align="left",
+        bordercolor="lightgray",
+        borderwidth=1,
+        borderpad=4,
+        bgcolor="white",
+        opacity=1
+    )
 
     fig.update_layout(
-        title=f"Placeholder Plot — pH: {pH}, Temp: {temp}°C, Radius: {radius} µm",
-        xaxis_title="x",
-        yaxis_title="y",
-        template="plotly_white",
+        title=f" Dissolution of Forsterite crystal pH: {pH}, Temp: {temp}°C, Radius: {radius} µm",
+        xaxis=dict(title='Time (years)'),
+
+        yaxis=dict(
+            title=dict(text='Volume (m³)', font=dict(color='blue')),
+            tickfont=dict(color='blue')
+        ),
+        yaxis2=dict(
+            title=dict(text='Radius (µm)', font=dict(color='green')),
+            overlaying='y',
+            side='right',
+            tickfont=dict(color='green')
+        ),
+
+        legend=dict(x=0.7, y=0.99),
+        template='simple_white',
     )
+
+
     return fig
 
 
