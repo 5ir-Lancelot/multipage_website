@@ -1231,7 +1231,7 @@ def update_plot(selected_mineral, radius_um):
 
 
     fig.update_layout(
-        title=f"Dissolution of {selected_mineral} crystal r<sub>0</sub> ={radius_um} µm",
+        title=f"Dissolution of {selected_mineral} crystal r<sub>0</sub> ={radius_um} µm<br>resulting log dissolution rate: {np.log10(R):.3f} log10(mol/m²/s)",
         xaxis=dict(title='Time (years)'),
 
         yaxis=dict(
