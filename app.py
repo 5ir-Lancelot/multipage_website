@@ -9,7 +9,7 @@ https://community.plotly.com/t/dash-pythonanywhere-deployment-issue/5062
 
 """
 import os, flask, pandas as pd, phreeqpython, plotly.graph_objects as go
-from dash import Dash, html, dcc, dash_table, ctx 
+from dash import Dash, html, dcc, dash_table, ctx, ALL
 from dash.dash_table import Format
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
@@ -21,7 +21,7 @@ from collections import defaultdict
 from dash.exceptions import PreventUpdate
 from queue import Queue
 from contextlib import contextmanager
-
+import PyCO2SYS as pyco2
 # ─────────────────────────────  CONSTANTS & STYLES  ──────────────────────────
 MAX_WIDTH = "1160px"   # global content width (≈ 12‑col Bootstrap container)
 PAD_Y     = "2rem"     # vertical padding for header / page bottom
@@ -741,6 +741,17 @@ def home_layout() -> html.Div:
                     ),
                     dbc.Col(
                         _hero_card(
+                            "Seawater Carbonate System Calculator",
+                            "Compute open-system carbonate speciation in seawater (PyCO2SYS)",
+                            "/carbonate-system-modeling-seawater"
+                            ,
+                        ),
+                        md=6,
+                        lg=4,
+                        class_name="mb-4",
+                    ),
+                    dbc.Col(
+                        _hero_card(
                             "Charge Balance",
                             "Check major-ion analyses for electrical neutrality and flag errors over ±5 %.",
                             "/charge-balance",
@@ -947,118 +958,6 @@ FULL_OPTIONS: list[dict] = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-'''
-def xrf_layout() -> html.Div:
-    return html.Div(
-        [
-            SiteHeader(
-                "XRF Mineral Oxides",
-                [("Home", "/"), ("XRF Mineral Oxides", "/xrf")],
-            ),
-            dbc.Container(
-                [
-                    html.H2("Mineral Formula Selector", className="mt-4"),
-                    html.P(
-                        "Start typing a mineral name or its formula. "
-                        "The first 50 matches are shown instantly in the dropdown.",
-                        className="my-4 text-muted",
-                    ),
-                    # full option list lives only in the browser
-                    dcc.Store(id="xrf-options-store", data=FULL_OPTIONS),
-                    dcc.Dropdown(
-                        id          = "xrf-formula",
-                        options     = FULL_OPTIONS,            # full list available immediately
-                        value       = FULL_OPTIONS[0]["value"],# pre-select first mineral → table shows on load
-                        searchable  = True,
-                        clearable   = False,
-                        placeholder = "Start typing …",
-                        style       = {"width": "100%"},
-                        className   = "mb-4",
-                    ),
-                    dbc.Card(
-                        dbc.CardBody(html.Div(id="xrf-table")),
-                        class_name="shadow-sm",
-                        style={"borderRadius": "1rem"},
-                    ),
-                ],
-                style={
-                    "maxWidth": MAX_WIDTH,
-                    "paddingTop": "3rem",
-                    "paddingBottom": "4rem",
-                },
-            ),
-            Footer(),
-        ],
-        style={
-            "background-image": "url('/assets/waterfall.jpg')",  # place image in assets folder
-            "background-size": "cover",       # cover the whole div
-            "background-repeat": "no-repeat",
-            "background-position": "center center",
-            "min-height": "100vh",            # make sure div is at least full viewport height
-            "width": "100%",
-        }
-    )
-
-def xrf_layout() -> html.Div:
-    return html.Div(
-        [
-            SiteHeader(
-                "XRF Mineral Oxides",
-                [("Home", "/"), ("XRF Mineral Oxides", "/xrf")],
-            ),
-            dbc.Container(
-                [
-                    html.Div(
-                        [
-                            html.H2("Mineral Formula Selector", className="mt-4"),
-                            html.P(
-                                "Start typing a mineral name or its formula. "
-                                "The first 50 matches are shown instantly in the dropdown.",
-                                className="my-4 text-muted",
-                            ),
-                            dcc.Store(id="xrf-options-store", data=FULL_OPTIONS),
-                            dcc.Dropdown(
-                                id="xrf-formula",
-                                options=FULL_OPTIONS,
-                                value=FULL_OPTIONS[0]["value"],
-                                searchable=True,
-                                clearable=False,
-                                placeholder="Start typing …",
-                                style={"width": "100%"},
-                                className="mb-4",
-                            ),
-                            dbc.Card(
-                                dbc.CardBody(html.Div(id="xrf-table")),
-                                class_name="shadow-sm",
-                                style={"borderRadius": "1rem"},
-                            ),
-                        ],
-                        style={
-                            "background-color": "rgba(255, 255, 255, 0.9)",  # semi-transparent white
-                            "padding": "2rem",
-                            "border-radius": "1rem",
-                        },
-                    ),
-                ],
-                style={
-                    "maxWidth": MAX_WIDTH,
-                    "paddingTop": "3rem",
-                    "paddingBottom": "4rem",
-                },
-            ),
-            Footer(),
-        ],
-        style={
-            "background-image": "url('/assets/waterfall.jpg')",
-            "background-size": "cover",
-            "background-repeat": "no-repeat",
-            "background-position": "center center",
-            "min-height": "100vh",
-            "width": "100%",
-        }
-    )
-
-'''
 
 def xrf_layout() -> html.Div:
     return html.Div(
@@ -1210,6 +1109,363 @@ def _update_xrf(formula):
     return make_table2(pd.DataFrame(rows), id="xrf-dt")
 
 
+# ────────────────────────────────────────────────────────────────────────────
+# 1️⃣  Seawater Carbonate System Speciation app
+# ────────────────────────────────────────────────────────────────────────────
+PARAMS = ['pH', 'TA', 'DIC', 'pCO2', 'Temperature']
+PARAM_MAP = {'TA':1, 'DIC':2, 'pH':3, 'pCO2':4, 'Temperature':None}
+
+def default_value_for(param: str):
+    return {'TA':2000,'DIC':2000,'pH':8.10,'pCO2':420.0,'Temperature':25.0}.get(param,0)
+
+def step_for(param: str):
+    return {'TA':1,'DIC':1,'pH':0.01,'pCO2':1.0,'Temperature':0.1}.get(param,0.01)
+
+def label_unit_for(param: str):
+    return {'TA':'(µmol/kg)','DIC':'(µmol/kg)','pH':'','pCO2':'(µatm)','Temperature':'(°C)'}.get(param,'')
+
+def make_table(df: pd.DataFrame, *, id: str, exponent: bool = False) -> dash_table.DataTable:
+    num_fmt = Format.Format(precision=4, scheme=Format.Scheme.exponent if exponent else Format.Scheme.decimal, trim=True)
+    return dash_table.DataTable(
+        id=id,
+        columns=[{"name": c, "id": c, "type": "numeric", "format": num_fmt} for c in df.columns],
+        data=df.to_dict("records"),
+        editable=False,
+        style_table={"width": "100%", "overflowX": "auto", "margin": "0 auto"},
+        style_header={"backgroundColor": "#f8f9fa","fontWeight":600,"padding":"10px"},
+        style_cell={"padding":"8px 10px","textAlign":"right","fontSize":"1rem","minWidth":"80px"},
+        style_data_conditional=[]
+    )
+
+
+def seawater_layout():
+    return html.Div(
+        [   # Wrap SiteHeader in a div with background
+            html.Div(
+                SiteHeader(
+                    "Seawater Carbonate System Calculation",
+                    [("Home", "/"), ("Seawater Carbonate System Calculation", "/seawater")],
+                ),
+                style={
+                    "background-color": "rgba(255, 255, 255, 0.9)",  # semi-transparent white
+                    "padding": "1rem 2rem",
+                    "border-radius": "1rem",
+                    "margin": "1rem 0",
+                },
+            ),
+
+            # Content container
+            dbc.Container(
+                [
+                    html.H2("Seawater Carbonate System Calculation", className="text-center my-4"),
+
+                    html.Div(
+                        [
+                            html.Div([
+                                html.Label("Select parameter 1"),
+                                dcc.Dropdown(
+                                    id='param1-dd',
+                                    options=[{'label': p, 'value': p} for p in PARAMS],
+                                    value='pH',
+                                    clearable=False
+                                )
+                            ], style={'width': '32%'}),
+
+                            html.Div([
+                                html.Label("Select parameter 2"),
+                                dcc.Dropdown(
+                                    id='param2-dd',
+                                    options=[{'label': p, 'value': p} for p in PARAMS],
+                                    value='TA',
+                                    clearable=False
+                                )
+                            ], style={'width': '32%'}),
+
+                            html.Div([
+                                html.Label("Select parameter 3"),
+                                dcc.Dropdown(
+                                    id='param3-dd',
+                                    options=[{'label': p, 'value': p} for p in PARAMS],
+                                    value='Temperature',
+                                    clearable=False
+                                )
+                            ], style={'width': '32%'}),
+                        ],
+                        style={
+                            'display': 'flex',
+                            'gap': '2%',
+                            'marginBottom': '1rem',
+                            'justifyContent': 'center'
+                        }
+                    ),
+
+                    html.Div(
+                        id='inputs-container',
+                        style={
+                            'display': 'grid',
+                            'gridTemplateColumns': 'repeat(3, 1fr)',
+                            'gap': '1rem'
+                        }
+                    ),
+
+                    html.Div(
+                        [
+                            dcc.Input(
+                                id='salinity-input',
+                                type='number',
+                                value=35.0,
+                                step=0.1,
+                                style={'width': '120px', 'marginRight': '0.5rem'}
+                            ),
+                            html.Label("Salinity (PSU)")
+                        ],
+                        style={'marginTop': '0.75rem', 'textAlign': 'center'}
+                    ),
+
+                    html.Button(
+                        'Calculate',
+                        id='calculate-btn',
+                        n_clicks=0,
+                        style={'marginTop': '1rem'}
+                    ),
+
+                    html.Hr(),
+
+                    html.Div(
+                        id='note-container',
+                        style={'color': '#666', 'marginBottom': '0.5rem'}
+                    ),
+                    html.Div(id='results-container')
+                ],
+                fluid=True,
+                className="d-flex flex-column align-items-center",
+                style={
+                    "background-color": "rgba(255, 255, 255, 0.9)",  # semi-transparent white
+                    "padding": "2rem",
+                    "border-radius": "1rem",
+                },
+            ),
+
+            Footer()
+        ],
+        style={
+            'backgroundImage': 'url("/assets/seawater_2.jpg")',  # store image in assets/
+            'backgroundSize': 'cover',
+            'backgroundPosition': 'center',
+            'minHeight': '100vh',
+            'padding': '20px'
+        }
+    )
+
+
+
+'''
+def seawater_layout():
+    return html.Div([
+        SiteHeader(
+            "Seawater Carbonate System Calculation",
+            [("Home", "/"), ("Seawater Carbonate System Calculation", "/seawater")]
+        ),
+
+        dbc.Container([
+            html.H2("Seawater Carbonate System Calculation", className="text-center my-4"),
+
+            html.Div([
+                html.Div([
+                    html.Label("Select parameter 1"),
+                    dcc.Dropdown(
+                        id='param1-dd',
+                        options=[{'label': p, 'value': p} for p in PARAMS],
+                        value='pH',
+                        clearable=False
+                    )
+                ], style={'width': '32%'}),
+                html.Div([
+                    html.Label("Select parameter 2"),
+                    dcc.Dropdown(
+                        id='param2-dd',
+                        options=[{'label': p, 'value': p} for p in PARAMS],
+                        value='TA',
+                        clearable=False
+                    )
+                ], style={'width': '32%'}),
+                html.Div([
+                    html.Label("Select parameter 3"),
+                    dcc.Dropdown(
+                        id='param3-dd',
+                        options=[{'label': p, 'value': p} for p in PARAMS],
+                        value='Temperature',
+                        clearable=False
+                    )
+                ], style={'width': '32%'}),
+            ], style={'display': 'flex', 'gap': '2%', 'marginBottom': '1rem'}),
+
+            html.Div(
+                id='inputs-container',
+                style={'display': 'grid', 'gridTemplateColumns': 'repeat(3,1fr)', 'gap': '1rem'}
+            ),
+
+            html.Div([
+                dcc.Input(
+                    id='salinity-input',
+                    type='number',
+                    value=35.0,
+                    step=0.1,
+                    style={'width': '120px', 'marginRight': '0.5rem'}
+                ),
+                html.Label("Salinity (PSU)")
+            ], style={'marginTop': '0.75rem'}),
+
+            html.Button(
+                'Calculate',
+                id='calculate-btn',
+                n_clicks=0,
+                style={'marginTop': '1rem'}
+            ),
+            html.Hr(),
+            html.Div(
+                id='note-container',
+                style={'color': '#666', 'marginBottom': '0.5rem'}
+            ),
+            html.Div(id='results-container')
+        ], fluid=True, className="d-flex flex-column align-items-center"),
+
+        Footer(),
+
+    ],
+    style={
+        'backgroundImage': 'url("/assets/waterfall.jpg")',  # store image in assets/
+        'backgroundSize': 'cover',
+        'backgroundPosition': 'center',
+        'minHeight': '100vh',
+        'padding': '20px'
+        }
+    )
+    
+'''
+
+'''
+def seawater_layout():
+    return dbc.Container([
+        html.H2("Seawater / Carbonate System", className="text-center my-4"),
+
+        html.Div([
+            html.Div([
+                html.Label("Select parameter 1"),
+                dcc.Dropdown(id='param1-dd', options=[{'label': p,'value':p} for p in PARAMS],
+                             value='pH', clearable=False)
+            ], style={'width':'32%'}),
+            html.Div([
+                html.Label("Select parameter 2"),
+                dcc.Dropdown(id='param2-dd', options=[{'label': p,'value':p} for p in PARAMS],
+                             value='TA', clearable=False)
+            ], style={'width':'32%'}),
+            html.Div([
+                html.Label("Select parameter 3"),
+                dcc.Dropdown(id='param3-dd', options=[{'label': p,'value':p} for p in PARAMS],
+                             value='Temperature', clearable=False)
+            ], style={'width':'32%'}),
+        ], style={'display':'flex','gap':'2%','marginBottom':'1rem'}),
+
+        html.Div(id='inputs-container',
+                 style={'display':'grid','gridTemplateColumns':'repeat(3,1fr)','gap':'1rem'}),
+
+        html.Div([
+            dcc.Input(id='salinity-input', type='number', value=35.0, step=0.1,
+                      style={'width':'120px','marginRight':'0.5rem'}),
+            html.Label("Salinity (PSU)")
+        ], style={'marginTop':'0.75rem'}),
+
+        html.Button('Calculate', id='calculate-btn', n_clicks=0, style={'marginTop':'1rem'}),
+        html.Hr(),
+        html.Div(id='note-container', style={'color':'#666','marginBottom':'0.5rem'}),
+        html.Div(id='results-container')
+    ], fluid=True, className="d-flex flex-column align-items-center"),
+'''
+
+# ─────────── Render dynamic numeric inputs ───────────
+@app.callback(
+    Output('inputs-container','children'),
+    Input('param1-dd','value'),
+    Input('param2-dd','value'),
+    Input('param3-dd','value')
+)
+def render_inputs(p1, p2, p3):
+    chosen = [p1,p2,p3]
+    children = []
+    for p in chosen:
+        children.append(html.Div([
+            html.Label(f"{p} {label_unit_for(p)}"),
+            dcc.Input(id={'type':'carbonate-input','param':p},
+                      type='number', value=default_value_for(p), step=step_for(p),
+                      style={'width':'100%'})
+        ]))
+    return children
+
+# ─────────── Calculate PyCO2SYS ───────────
+@app.callback(
+    Output('results-container','children'),
+    Output('note-container','children'),
+    Input('calculate-btn','n_clicks'),
+    State('param1-dd','value'),
+    State('param2-dd','value'),
+    State('param3-dd','value'),
+    State({'type':'carbonate-input','param':ALL},'value'),
+    State({'type':'carbonate-input','param':ALL},'id'),
+    State('salinity-input','value'),
+    prevent_initial_call=True
+)
+def calculate_carbonate_system(n_clicks, p1, p2, p3, values, ids, salinity):
+    chosen = [p1,p2,p3]
+    input_dict = {id['param']: val for id,val in zip(ids,values)}
+    notes = []
+
+    if 'Temperature' in input_dict:
+        temperature = input_dict['Temperature']
+    else:
+        temperature = 25.0
+        notes.append("Note: Temperature not selected; using 25°C")
+
+    # Determine first two carbonate params for PyCO2SYS
+    carbonate_names = [p for p in chosen if p != 'Temperature']
+    if len(carbonate_names)<2:
+        return html.Div([html.B("Error:"),"Please select at least two carbonate parameters"]), "; ".join(notes)
+    if len(carbonate_names)>2:
+        notes.append(f"Ignoring third parameter {carbonate_names[2]}")
+        carbonate_names = carbonate_names[:2]
+
+    par1_name, par2_name = carbonate_names
+    par1_type, par2_type = PARAM_MAP[par1_name], PARAM_MAP[par2_name]
+    par1_val, par2_val = input_dict[par1_name], input_dict[par2_name]
+
+    try:
+        results = pyco2.sys(par1_type=par1_type, par1=par1_val,
+                             par2_type=par2_type, par2=par2_val,
+                             temperature=temperature, salinity=salinity)
+
+        # Separate concentration vs other parameters
+        selected_vars = ["pH_total","TA","CO2","CO3","OH","Hfree","bicarbonate","carbonate","total_calcium","dic","pCO2"]
+        other_vars = ["saturation_calcite","saturation_aragonite","pH"]
+
+        filtered_results = {k:v for k,v in results.items() if k in selected_vars}
+        other_results = {k:v for k,v in results.items() if k in other_vars}
+
+        # Build tables
+        table_umol = make_table(pd.DataFrame(list(filtered_results.items()), columns=["Parameter","Value (µmol/kg)"]),
+                                id="table-umol")
+        table_other = make_table(pd.DataFrame(list(other_results.items()), columns=["Parameter","Value"]),
+                                 id="table-other")
+
+        return html.Div([
+            html.H4("Calculated Carbonate System"),
+            html.H5("Concentrations"),
+            table_umol,
+            html.H5("Other Parameters"),
+            table_other
+        ]), "; ".join(notes)
+
+    except Exception as e:
+        return html.Div([html.B("Error:"), str(e)]), "; ".join(notes)
 
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -1903,6 +2159,9 @@ def display_page(pathname: str):
         return forsterite_dissolution_layout()
     if pathname == "/charge-balance":
         return cb_layout()
+    if pathname == "/carbonate-system-modeling-seawater":
+        return seawater_layout()
+
     if pathname == "/impressum":
         return legal_layout(IMPRESSUM_MD, "Impressum", pathname)
     if pathname == "/datenschutz":
