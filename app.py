@@ -675,7 +675,8 @@ def calc_layout() -> html.Div:
         SiteHeader("Alkalinity Tool", [("Home", "/"), ("Alkalinity Tool", "/carbonate-system-modeling")]),
         html.Div(id="subpage-content", children=page1_layout),
         Footer(),
-    ])
+    ]
+)
 
 # toggle Table / Graph sub‑pages
 @app.callback(Output("subpage-content", "children"),
@@ -944,6 +945,9 @@ FULL_OPTIONS: list[dict] = [
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+'''
 def xrf_layout() -> html.Div:
     return html.Div(
         [
@@ -984,8 +988,148 @@ def xrf_layout() -> html.Div:
                 },
             ),
             Footer(),
-        ]
+        ],
+        style={
+            "background-image": "url('/assets/waterfall.jpg')",  # place image in assets folder
+            "background-size": "cover",       # cover the whole div
+            "background-repeat": "no-repeat",
+            "background-position": "center center",
+            "min-height": "100vh",            # make sure div is at least full viewport height
+            "width": "100%",
+        }
     )
+
+def xrf_layout() -> html.Div:
+    return html.Div(
+        [
+            SiteHeader(
+                "XRF Mineral Oxides",
+                [("Home", "/"), ("XRF Mineral Oxides", "/xrf")],
+            ),
+            dbc.Container(
+                [
+                    html.Div(
+                        [
+                            html.H2("Mineral Formula Selector", className="mt-4"),
+                            html.P(
+                                "Start typing a mineral name or its formula. "
+                                "The first 50 matches are shown instantly in the dropdown.",
+                                className="my-4 text-muted",
+                            ),
+                            dcc.Store(id="xrf-options-store", data=FULL_OPTIONS),
+                            dcc.Dropdown(
+                                id="xrf-formula",
+                                options=FULL_OPTIONS,
+                                value=FULL_OPTIONS[0]["value"],
+                                searchable=True,
+                                clearable=False,
+                                placeholder="Start typing …",
+                                style={"width": "100%"},
+                                className="mb-4",
+                            ),
+                            dbc.Card(
+                                dbc.CardBody(html.Div(id="xrf-table")),
+                                class_name="shadow-sm",
+                                style={"borderRadius": "1rem"},
+                            ),
+                        ],
+                        style={
+                            "background-color": "rgba(255, 255, 255, 0.9)",  # semi-transparent white
+                            "padding": "2rem",
+                            "border-radius": "1rem",
+                        },
+                    ),
+                ],
+                style={
+                    "maxWidth": MAX_WIDTH,
+                    "paddingTop": "3rem",
+                    "paddingBottom": "4rem",
+                },
+            ),
+            Footer(),
+        ],
+        style={
+            "background-image": "url('/assets/waterfall.jpg')",
+            "background-size": "cover",
+            "background-repeat": "no-repeat",
+            "background-position": "center center",
+            "min-height": "100vh",
+            "width": "100%",
+        }
+    )
+
+'''
+
+def xrf_layout() -> html.Div:
+    return html.Div(
+        [
+            # Wrap SiteHeader in a div with background
+            html.Div(
+                SiteHeader(
+                    "XRF Mineral Oxides",
+                    [("Home", "/"), ("XRF Mineral Oxides", "/xrf")],
+                ),
+                style={
+                    "background-color": "rgba(255, 255, 255, 0.9)",  # semi-transparent white
+                    "padding": "1rem 2rem",
+                    "border-radius": "1rem",
+                    "margin": "1rem 0",
+                },
+            ),
+
+            dbc.Container(
+                [
+                    html.Div(
+                        [
+                            html.H2("Mineral Formula Selector", className="mt-4"),
+                            html.P(
+                                "Start typing a mineral name or its formula. "
+                                "The first 50 matches are shown instantly in the dropdown.",
+                                className="my-4 text-muted",
+                            ),
+                            dcc.Store(id="xrf-options-store", data=FULL_OPTIONS),
+                            dcc.Dropdown(
+                                id="xrf-formula",
+                                options=FULL_OPTIONS,
+                                value=FULL_OPTIONS[0]["value"],
+                                searchable=True,
+                                clearable=False,
+                                placeholder="Start typing …",
+                                style={"width": "100%"},
+                                className="mb-4",
+                            ),
+                            dbc.Card(
+                                dbc.CardBody(html.Div(id="xrf-table")),
+                                class_name="shadow-sm",
+                                style={"borderRadius": "1rem"},
+                            ),
+                        ],
+                        style={
+                            "background-color": "rgba(255, 255, 255, 0.9)",  # semi-transparent white
+                            "padding": "2rem",
+                            "border-radius": "1rem",
+                        },
+                    ),
+                ],
+                style={
+                    "maxWidth": MAX_WIDTH,
+                    "paddingTop": "3rem",
+                    "paddingBottom": "4rem",
+                },
+            ),
+            Footer(),
+        ],
+        style={
+            "background-image": "url('/assets/background_image.jpg')",
+            "background-size": "cover",
+            "background-repeat": "no-repeat",
+            "background-position": "center center",
+            "min-height": "100vh",
+            "width": "100%",
+        }
+    )
+
+
 
 # ── super-light client-side filter (fast even on >5 000 minerals) ───────────
 app.clientside_callback(
