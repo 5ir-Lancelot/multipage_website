@@ -1632,11 +1632,15 @@ def update_plot(selected_mineral, radius_um):
 
     fig.update_layout(
         title=f"Dissolution of {selected_mineral} crystal r<sub>0</sub> ={radius_um} µm<br>resulting log dissolution rate: {np.log10(R):.3f} log10(mol/m²/s)",
-        xaxis=dict(title='Time (years)'),
+        xaxis=dict(title='Time (years)',
+                   exponentformat='e',  # use scientific notation like 1e+03
+                   showexponent='all' ), # always show the exponent),
 
         yaxis=dict(
             title=dict(text='Volume (m³)', font=dict(color='blue')),
-            tickfont=dict(color='blue')
+            tickfont=dict(color='blue'),
+            exponentformat='e',  # use scientific notation like 1e+03
+            showexponent='all'  # always show the exponent
         ),
         yaxis2=dict(
             title=dict(text='Radius (µm)', font=dict(color='green')),
@@ -1874,11 +1878,15 @@ def update_forsterite_plot(pH, temp, radius):
 
     fig.update_layout(
         title=f" Dissolution of Forsterite crystal pH: {pH}, Temp: {temp}°C, Radius: {radius} µm<br>resulting log dissolution rate: {log_rate:.3f} log10(mol/m²/s)",
-        xaxis=dict(title='Time (years)'),
+        xaxis=dict(title='Time (years)',
+                   exponentformat='e',  # use scientific notation like 1e+03
+                    showexponent='all'),  # always show the exponent),
 
         yaxis=dict(
             title=dict(text='Volume (m³)', font=dict(color='blue')),
-            tickfont=dict(color='blue')
+            tickfont=dict(color='blue'),
+            exponentformat='e',  # use scientific notation like 1e+03
+            showexponent='all'  # always show the exponent
         ),
         yaxis2=dict(
             title=dict(text='Radius (µm)', font=dict(color='green')),

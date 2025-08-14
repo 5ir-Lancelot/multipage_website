@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="new background images">
-      <change afterPath="$PROJECT_DIR$/assets/seawater.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/seawater_2.jpg" afterDir="false" />
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="new seawater app implemented">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
@@ -181,15 +179,7 @@
       <workItem from="1754922767492" duration="2237000" />
       <workItem from="1754988588868" duration="2415000" />
       <workItem from="1755171780700" duration="2163000" />
-      <workItem from="1755185004061" duration="2946000" />
-    </task>
-    <task id="LOCAL-00005" summary="updated the .html files with datenschutz etc">
-      <option name="closed" value="true" />
-      <created>1712935799406</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1712935799406</updated>
+      <workItem from="1755185004061" duration="3589000" />
     </task>
     <task id="LOCAL-00006" summary="updated the README">
       <option name="closed" value="true" />
@@ -575,7 +565,15 @@
       <option name="project" value="LOCAL" />
       <updated>1755172947661</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="new seawater app implemented">
+      <option name="closed" value="true" />
+      <created>1755188031401</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1755188031401</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -593,7 +591,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="corrected relative CBE denominator" />
     <MESSAGE value="updated texts with CBE equations and references" />
     <MESSAGE value="convert comma to point to avoid input error" />
     <MESSAGE value="comma and point fix (more flexibility)" />
@@ -618,9 +615,10 @@
     <MESSAGE value="including background image to home" />
     <MESSAGE value="adding rate output to app" />
     <MESSAGE value="new background images" />
-    <option name="LAST_COMMIT_MESSAGE" value="new background images" />
+    <MESSAGE value="new seawater app implemented" />
+    <option name="LAST_COMMIT_MESSAGE" value="new seawater app implemented" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1755187833946" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1755188520225" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
   </component>
 </project>
