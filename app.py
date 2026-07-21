@@ -818,6 +818,16 @@ def home_layout() -> html.Div:
                         lg=4,
                         class_name="mb-4",
                     ),
+                    dbc.Col(
+                        _hero_card(
+                            "Mineralwässer in Deutschland",
+                            "Eine Karte mit der Vulkaneifel und einer Auswahl an Mineralwässern",
+                            "/mineral-water",
+                        ),
+                        md=6,
+                        lg=4,
+                        class_name="mb-4",
+                    ),
                     ],
                 class_name="g-4 justify-content-center mt-4",
                 ),
@@ -2314,6 +2324,9 @@ def update_plot(selected_ta):
     return fig
 
 
+# ────────────────────────────────────────────────────────────────────────────
+#   pCO2, DIC App
+# ────────────────────────────────────────────────────────────────────────────
 
 
 def dic_pco2_layout():
@@ -2377,6 +2390,53 @@ def dic_pco2_layout():
                     "padding": "20px"
                 },
 
+            ),
+
+            Footer(),
+        ],
+        style={
+            "display": "flex",
+            "flexDirection": "column",
+            "minHeight": "100vh",
+        },
+    )
+
+
+# ────────────────────────────────────────────────────────────────────────────
+#   Mineral water map of germany (ongoing work)
+# ────────────────────────────────────────────────────────────────────────────
+
+def mineralwater_map_layout():
+    return html.Div(
+        [
+            html.Div(
+                [
+                    SiteHeader(
+                        "Mineral Water Map",
+                        [("Home", "/"), ("Mineral Water Map", "/mineralwater-map")],
+                    ),
+
+                    html.H1("German Mineral Water Sources"),
+
+                    html.P(
+                        "Interactive map of mineral water bottling locations. "
+                        "Zoom, pan and click on markers to view details."
+                    ),
+
+                    html.Iframe(
+                        src="/assets/mineralwasser_vulkaneifel.html",
+                        style={
+                            "width": "100%",
+                            "height": "80vh",
+                            "border": "none",
+                        },
+                    ),
+                ],
+                style={
+                    "maxWidth": "1800px",
+                    "margin": "0 auto",
+                    "padding": "20px",
+                },
             ),
 
             Footer(),
@@ -2660,6 +2720,8 @@ def display_page(pathname: str):
         return seawater_layout()
     if pathname == "/dic-pCO2":
         return dic_pco2_layout()
+    if pathname == "/mineral-water":
+        return mineralwater_map_layout()
     if pathname == "/impressum":
         return legal_layout(IMPRESSUM_MD, "Impressum", pathname)
     if pathname == "/datenschutz":
