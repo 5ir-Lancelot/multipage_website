@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="make constant y-axis scale and markers">
-      <change afterPath="$PROJECT_DIR$/assets/mineralwasser_vulkaneifel.html" afterDir="false" />
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="include a mineral water map to the website">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -192,15 +190,7 @@
       <workItem from="1764151781264" duration="15164000" />
       <workItem from="1764343175546" duration="1017000" />
       <workItem from="1764610551450" duration="63000" />
-      <workItem from="1784649686300" duration="1814000" />
-    </task>
-    <task id="LOCAL-00027" summary="corrected relative CBE denominator">
-      <option name="closed" value="true" />
-      <created>1750151639812</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1750151639812</updated>
+      <workItem from="1784649686300" duration="3948000" />
     </task>
     <task id="LOCAL-00028" summary="updated texts with CBE equations and references">
       <option name="closed" value="true" />
@@ -586,7 +576,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764343914640</updated>
     </task>
-    <option name="localTasksCounter" value="76" />
+    <task id="LOCAL-00076" summary="include a mineral water map to the website">
+      <option name="closed" value="true" />
+      <created>1784651801804</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1784651801818</updated>
+    </task>
+    <option name="localTasksCounter" value="77" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -604,7 +602,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="implemented forsterite app" />
     <MESSAGE value="changes in forsterite dissolution app" />
     <MESSAGE value="change in home layout" />
     <MESSAGE value="including background image to home" />
@@ -629,7 +626,8 @@
     <MESSAGE value="make TA line in the pCO2 plot dashed" />
     <MESSAGE value="make TA line in the pCO2 plot dotted" />
     <MESSAGE value="make constant y-axis scale and markers" />
-    <option name="LAST_COMMIT_MESSAGE" value="make constant y-axis scale and markers" />
+    <MESSAGE value="include a mineral water map to the website" />
+    <option name="LAST_COMMIT_MESSAGE" value="include a mineral water map to the website" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/multipage_website$multipage_website.coverage" NAME="multipage_website Coverage Results" MODIFIED="1764343677255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
