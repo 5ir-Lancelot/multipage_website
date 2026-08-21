@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="include a mineral water map to the website">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="include a mineral water map to the website" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -191,6 +189,7 @@
       <workItem from="1764343175546" duration="1017000" />
       <workItem from="1764610551450" duration="63000" />
       <workItem from="1784649686300" duration="3948000" />
+      <workItem from="1785337155419" duration="157000" />
     </task>
     <task id="LOCAL-00028" summary="updated texts with CBE equations and references">
       <option name="closed" value="true" />
