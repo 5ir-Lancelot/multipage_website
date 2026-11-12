@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="added new venv to the app.wsgi file after the uni server was updated to a newer python version">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="3d62f3c3-0f38-47a8-9eb5-b3aa93ce4c9d" name="Changes" comment="added new venv to the app.wsgi file after the uni server was updated to a newer python version" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -194,23 +192,7 @@
       <workItem from="1785337155419" duration="157000" />
       <workItem from="1787343078896" duration="2798000" />
       <workItem from="1790958162673" duration="602000" />
-      <workItem from="1794411487469" duration="1171000" />
-    </task>
-    <task id="LOCAL-00029" summary="convert comma to point to avoid input error">
-      <option name="closed" value="true" />
-      <created>1750158310968</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1750158310968</updated>
-    </task>
-    <task id="LOCAL-00030" summary="comma and point fix (more flexibility)">
-      <option name="closed" value="true" />
-      <created>1750159876114</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1750159876114</updated>
+      <workItem from="1794411487469" duration="2543000" />
     </task>
     <task id="LOCAL-00031" summary="input type text (to avoid red outline data typüe check box)">
       <option name="closed" value="true" />
@@ -588,7 +570,23 @@
       <option name="project" value="LOCAL" />
       <updated>1787343367574</updated>
     </task>
-    <option name="localTasksCounter" value="78" />
+    <task id="LOCAL-00078" summary="added new venv to the app.wsgi file after the uni server was updated to a newer python version">
+      <option name="closed" value="true" />
+      <created>1794415155556</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1794415155556</updated>
+    </task>
+    <task id="LOCAL-00079" summary="added new venv to the app.wsgi file after the uni server was updated to a newer python version">
+      <option name="closed" value="true" />
+      <created>1794415202983</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1794415202983</updated>
+    </task>
+    <option name="localTasksCounter" value="80" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -606,7 +604,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="change in home layout" />
     <MESSAGE value="including background image to home" />
     <MESSAGE value="adding rate output to app" />
     <MESSAGE value="new background images" />
@@ -630,6 +627,7 @@
     <MESSAGE value="make TA line in the pCO2 plot dotted" />
     <MESSAGE value="make constant y-axis scale and markers" />
     <MESSAGE value="include a mineral water map to the website" />
+    <MESSAGE value="added new mineralwasser map" />
     <MESSAGE value="added new venv to the app.wsgi file after the uni server was updated to a newer python version" />
     <option name="LAST_COMMIT_MESSAGE" value="added new venv to the app.wsgi file after the uni server was updated to a newer python version" />
   </component>
